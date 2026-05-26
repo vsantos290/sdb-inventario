@@ -1,0 +1,2473 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>SDB — Sistema de Inventário</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800&family=Barlow+Condensed:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* =============================================
+   SDB INVENTORY SYSTEM — STYLES COMPLETOS
+   Paleta: Azul Escuro #1a2e5a | Verde Limão #8bc34a
+   ============================================= */
+:root{
+  --navy:#1a2e5a;--navy-mid:#213470;--navy-light:#2a3f82;--navy-dark:#111e3d;
+  --lime:#8bc34a;--lime-bright:#a4d65e;--lime-dark:#6ea832;
+  --white:#ffffff;--off-white:#f4f6fb;--gray-100:#eef1f8;--gray-200:#dde2ef;
+  --gray-400:#9aa3bb;--gray-600:#5a6480;
+  --red:#e53e3e;--red-light:#fff5f5;--green:#38a169;--green-light:#f0fff4;
+  --yellow:#d69e2e;--yellow-light:#fffff0;
+  --sidebar-w:256px;--topbar-h:60px;--radius:12px;--radius-sm:8px;
+  --shadow:0 4px 24px rgba(26,46,90,.10);--shadow-strong:0 8px 40px rgba(26,46,90,.18);
+  --font:'Barlow',sans-serif;--font-cond:'Barlow Condensed',sans-serif;
+  --transition:.22s cubic-bezier(.4,0,.2,1);
+}
+body.dark{--off-white:#101828;--gray-100:#162035;--gray-200:#1e2d4a;--white:#1a2b45;--gray-600:#a0aec0;--gray-400:#718096;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--off-white);color:var(--navy);min-height:100vh;display:flex;overflow-x:hidden}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar-w);background:var(--navy);min-height:100vh;display:flex;flex-direction:column;position:fixed;left:0;top:0;z-index:100;transition:transform var(--transition),width var(--transition);overflow:hidden}
+.sidebar.collapsed{width:64px}
+.sidebar.mobile-hidden{transform:translateX(-100%)}
+.sidebar-header{display:flex;align-items:center;justify-content:space-between;padding:20px 16px;border-bottom:1px solid rgba(255,255,255,.08)}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:38px;height:34px;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:visible}
+.logo-diamond svg{width:38px;height:34px;display:block;filter:drop-shadow(0 2px 4px rgba(0,0,0,.18))}
+.logo-icon svg{width:100%;height:100%}
+.logo-text{font-family:var(--font-cond);font-size:22px;font-weight:800;color:var(--white);letter-spacing:2px;white-space:nowrap;opacity:1;transition:opacity var(--transition)}
+.sidebar.collapsed .logo-text{opacity:0;width:0;overflow:hidden}
+.sidebar-toggle{background:none;border:none;cursor:pointer;display:flex;flex-direction:column;gap:4px;padding:4px}
+.sidebar-toggle span{display:block;width:18px;height:2px;background:rgba(255,255,255,.5);transition:var(--transition);border-radius:2px}
+.sidebar-nav{flex:1;padding:16px 0;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.1) transparent}
+.nav-section{margin-bottom:8px;padding:0 8px}
+.nav-label{display:block;font-size:10px;font-weight:700;letter-spacing:1.5px;color:rgba(255,255,255,.35);padding:12px 8px 6px;white-space:nowrap;overflow:hidden;transition:opacity var(--transition)}
+.sidebar.collapsed .nav-label{opacity:0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--radius-sm);color:rgba(255,255,255,.65);text-decoration:none;font-size:13.5px;font-weight:500;transition:all var(--transition);cursor:pointer;white-space:nowrap;margin-bottom:2px}
+.nav-item svg{width:18px;height:18px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nav-item:hover{background:rgba(255,255,255,.08);color:var(--white)}
+.nav-item.active{background:var(--lime);color:var(--navy-dark);font-weight:700}
+.nav-item.active svg{stroke:var(--navy-dark)}
+.sidebar.collapsed .nav-item span{opacity:0;width:0;overflow:hidden}
+.sidebar-footer{padding:16px;border-top:1px solid rgba(255,255,255,.08)}
+.user-info{display:flex;align-items:center;gap:10px}
+.user-avatar{width:34px;height:34px;border-radius:50%;background:var(--lime);color:var(--navy-dark);font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.user-name{display:block;font-size:13px;font-weight:600;color:var(--white);white-space:nowrap}
+.user-role{display:block;font-size:10px;color:rgba(255,255,255,.4);letter-spacing:.8px}
+.sidebar.collapsed .user-details{opacity:0;width:0;overflow:hidden}
+
+/* MAIN */
+.main-content{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh;transition:margin-left var(--transition)}
+.sidebar.collapsed ~ .main-content{margin-left:64px}
+
+/* TOPBAR */
+.topbar{height:var(--topbar-h);background:var(--white);border-bottom:2px solid var(--gray-200);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:50;box-shadow:0 2px 8px rgba(26,46,90,.06)}
+.topbar-left{display:flex;align-items:center;gap:16px}
+.menu-btn{background:none;border:none;cursor:pointer;display:flex;flex-direction:column;gap:4px;padding:6px}
+.menu-btn span{display:block;width:20px;height:2px;background:var(--navy);border-radius:2px}
+.page-title{font-family:var(--font-cond);font-size:18px;font-weight:700;color:var(--navy);letter-spacing:.5px}
+.topbar-right{display:flex;align-items:center;gap:16px}
+.topbar-date{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--gray-600)}
+.topbar-date svg{width:15px;height:15px;stroke:var(--gray-400);fill:none;stroke-width:1.8;stroke-linecap:round}
+.theme-toggle,.notif-btn{background:none;border:none;cursor:pointer;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background var(--transition);position:relative}
+.theme-toggle:hover,.notif-btn:hover{background:var(--gray-100)}
+.theme-toggle svg,.notif-btn svg{width:18px;height:18px;stroke:var(--gray-600);fill:none;stroke-width:1.8;stroke-linecap:round}
+.notif-badge{position:absolute;top:2px;right:2px;width:16px;height:16px;background:var(--lime);color:var(--navy-dark);font-size:9px;font-weight:800;border-radius:50%;display:flex;align-items:center;justify-content:center}
+
+/* PAGES */
+.pages-container{flex:1;padding:24px}
+.page{display:none;animation:fadeIn .3s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.page-header h1{font-family:var(--font-cond);font-size:22px;font-weight:800;color:var(--navy);letter-spacing:.5px}
+
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:20px}
+.kpi-card{background:var(--navy);border-radius:var(--radius);padding:16px 18px;position:relative;overflow:hidden}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--lime)}
+.kpi-card.highlight::before{background:var(--lime-bright)}
+.kpi-label{font-size:11px;font-weight:600;color:rgba(255,255,255,.55);letter-spacing:.5px;margin-bottom:6px}
+.kpi-value{font-family:var(--font-cond);font-size:24px;font-weight:800;color:var(--white)}
+.kpi-value.accent{color:var(--lime)}
+.kpi-value.green{color:#6ee77a}
+.kpi-bar{height:3px;background:rgba(255,255,255,.1);border-radius:2px;margin-top:8px;overflow:hidden}
+.kpi-bar-fill{height:100%;background:var(--lime);border-radius:2px;transition:width 1.2s cubic-bezier(.4,0,.2,1)}
+.kpi-bar-fill.green{background:#6ee77a}
+
+/* FILTERS */
+.dashboard-filters{display:flex;justify-content:flex-end;gap:14px;margin-bottom:20px;flex-wrap:wrap;align-items:flex-end}
+.filter-group{display:flex;flex-direction:column;gap:4px;min-width:150px}
+.filter-group label{font-size:10px;font-weight:700;letter-spacing:1px;color:var(--gray-600)}
+.filter-group select,.filter-select{border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);padding:7px 12px;font-family:var(--font);font-size:13px;color:var(--navy);background:var(--white);cursor:pointer;outline:none;transition:border-color var(--transition)}
+.filter-group select:focus,.filter-select:focus{border-color:var(--lime)}
+.filters-bar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.search-input{flex:1;min-width:200px;border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);padding:9px 14px;font-family:var(--font);font-size:13.5px;color:var(--navy);background:var(--white);outline:none;transition:border-color var(--transition)}
+.search-input:focus{border-color:var(--lime)}
+
+/* CHARTS */
+.charts-row{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px}
+.chart-card{background:var(--navy);border-radius:var(--radius);padding:20px;position:relative}
+.chart-title{font-family:var(--font-cond);font-size:14px;font-weight:700;color:var(--white);letter-spacing:1px;margin-bottom:16px;text-align:center}
+.gauge-value{text-align:center;font-family:var(--font-cond);font-size:28px;font-weight:800;color:var(--white);margin-top:-30px;position:relative;z-index:1}
+.gauge-labels{display:flex;justify-content:space-between;margin-top:4px}
+.gauge-labels span{font-size:11px;color:rgba(255,255,255,.5)}
+.period-selector{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--gray-600)}
+.period-selector input[type=date]{border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);padding:6px 10px;font-family:var(--font);font-size:13px;color:var(--navy);background:var(--white);outline:none}
+.period-selector input:focus{border-color:var(--lime)}
+
+/* TABLE */
+.table-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+.table-wrapper{width:100%;max-width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--gray-200) transparent;touch-action:pan-x;overscroll-behavior-x:contain}
+.table-wrapper::after{content:'Arraste para o lado para ver mais colunas';display:none;font-size:11px;color:var(--gray-400);padding:6px 2px}
+.data-table{width:100%;border-collapse:collapse;font-size:13px}
+.data-table thead{background:var(--navy)}
+.data-table thead th{padding:12px 14px;text-align:left;font-family:var(--font-cond);font-size:12px;font-weight:700;letter-spacing:.8px;color:rgba(255,255,255,.85);white-space:nowrap;cursor:pointer;user-select:none;transition:background var(--transition)}
+.data-table thead th:hover{background:var(--navy-light)}
+.data-table tbody tr{border-bottom:1px solid var(--gray-100);transition:background var(--transition)}
+.data-table tbody tr:hover{background:var(--gray-100)}
+.data-table tbody td{padding:10px 14px;color:var(--navy);white-space:nowrap}
+.data-table tfoot .table-total td{padding:12px 14px;font-weight:700;background:var(--gray-100);border-top:2px solid var(--gray-200)}
+.empty-row{text-align:center;color:var(--gray-400);padding:32px !important}
+.positive{color:var(--green) !important;font-weight:600}
+.negative{color:var(--red) !important;font-weight:600}
+
+/* BADGES */
+.status-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.5px}
+.status-badge.batendo,.status-badge.BATENDO{background:var(--green-light);color:var(--green)}
+.status-badge.deficit,.status-badge.DEFICIT{background:var(--red-light);color:var(--red)}
+.status-badge.superavit,.status-badge.SUPERAVIT{background:var(--yellow-light);color:var(--yellow)}
+.status-badge.sucesso{background:var(--green-light);color:var(--green)}
+.status-badge.erro{background:var(--red-light);color:var(--red)}
+
+/* BUTTONS */
+.btn-primary{display:inline-flex;align-items:center;gap:7px;background:var(--lime);color:var(--navy-dark);border:none;border-radius:var(--radius-sm);padding:9px 18px;font-family:var(--font);font-size:13.5px;font-weight:700;cursor:pointer;transition:all var(--transition);text-decoration:none;white-space:nowrap}
+.btn-primary svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.btn-primary:hover{background:var(--lime-bright);transform:translateY(-1px);box-shadow:0 4px 14px rgba(139,195,74,.35)}
+.btn-secondary{display:inline-flex;align-items:center;gap:7px;background:var(--white);color:var(--navy);border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);padding:8px 16px;font-family:var(--font);font-size:13.5px;font-weight:600;cursor:pointer;transition:all var(--transition);text-decoration:none;white-space:nowrap}
+.btn-secondary svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.btn-secondary:hover{background:var(--gray-100);border-color:var(--navy)}
+.header-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn-danger{background:var(--red-light);color:var(--red);border:none;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;transition:background var(--transition)}
+.btn-danger:hover{background:#fed7d7}
+
+/* FORM */
+.form-card{background:var(--white);border-radius:var(--radius);padding:28px;box-shadow:var(--shadow);margin-bottom:20px}
+.form-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:20px}
+.form-grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-bottom:20px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group label{font-size:12px;font-weight:700;letter-spacing:.5px;color:var(--gray-600);text-transform:uppercase}
+.form-input{border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);padding:10px 14px;font-family:var(--font);font-size:14px;color:var(--navy);background:var(--white);outline:none;transition:border-color var(--transition);width:100%}
+.form-input:focus{border-color:var(--lime);box-shadow:0 0 0 3px rgba(139,195,74,.12)}
+.form-input[readonly]{background:var(--gray-100);color:var(--gray-600)}
+.form-input.large-input{font-size:22px;font-weight:700;text-align:right;color:var(--navy)}
+.input-with-icon{position:relative}
+.input-with-icon .form-input{padding-right:44px}
+.input-icon-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:4px;color:var(--gray-400);transition:color var(--transition)}
+.input-icon-btn:hover{color:var(--lime-dark)}
+.input-icon-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.form-actions{display:flex;justify-content:flex-end;gap:12px;padding-top:16px;border-top:1px solid var(--gray-100)}
+.span-2{grid-column:span 2}
+.span-3{grid-column:span 3}
+
+/* COMPARISON */
+.comparison-box{display:grid;grid-template-columns:repeat(4,1fr);background:var(--gray-200);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:20px}
+.comp-item{background:var(--navy);padding:14px 20px;display:flex;flex-direction:column;gap:4px;text-align:center}
+.comp-label{font-size:11px;font-weight:600;color:rgba(255,255,255,.5);letter-spacing:.5px}
+.comp-value{font-family:var(--font-cond);font-size:22px;font-weight:800;color:var(--white)}
+
+/* UPLOAD */
+.upload-card{background:var(--white);border-radius:var(--radius);padding:28px;box-shadow:var(--shadow);margin-bottom:20px}
+.upload-area{border:2px dashed var(--gray-200);border-radius:var(--radius);padding:48px 32px;text-align:center;transition:border-color var(--transition),background var(--transition);cursor:pointer}
+.upload-area:hover,.upload-area.dragover{border-color:var(--lime);background:rgba(139,195,74,.04)}
+.upload-icon{width:48px;height:48px;stroke:var(--gray-400);fill:none;stroke-width:1.5;stroke-linecap:round;margin:0 auto 16px;display:block}
+.upload-area p{color:var(--gray-600);margin-bottom:8px}
+.upload-area span{color:var(--gray-400);font-size:13px;display:block;margin-bottom:14px}
+.upload-hint{font-size:12px;color:var(--gray-400);margin-top:12px}
+.upload-fields{background:var(--gray-100);border-radius:var(--radius-sm);padding:12px 16px;margin-top:12px;font-size:12px;color:var(--gray-600);text-align:left}
+.upload-fields strong{color:var(--navy);display:block;margin-bottom:4px}
+.preview-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.preview-info{font-size:13px;color:var(--gray-600);font-weight:500}
+.history-card{background:var(--white);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-top:16px}
+.history-card h3{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:16px}
+
+/* PAGINATION */
+.pagination{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-top:1px solid var(--gray-100)}
+.pagination-info{font-size:12px;color:var(--gray-400)}
+.pagination-btns{display:flex;gap:4px}
+.page-btn{width:32px;height:32px;border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);background:var(--white);color:var(--navy);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all var(--transition)}
+.page-btn:hover{border-color:var(--lime);color:var(--lime-dark)}
+.page-btn.active{background:var(--navy);border-color:var(--navy);color:var(--white)}
+.page-btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* TIMELINE */
+.timeline{position:relative;padding-left:32px}
+.timeline::before{content:'';position:absolute;left:12px;top:0;bottom:0;width:2px;background:var(--gray-200)}
+.timeline-item{position:relative;background:var(--white);border-radius:var(--radius);padding:18px 20px;margin-bottom:14px;box-shadow:var(--shadow)}
+.timeline-item::before{content:'';position:absolute;left:-24px;top:24px;width:12px;height:12px;border-radius:50%;background:var(--lime);border:2px solid var(--off-white);box-shadow:0 0 0 2px var(--lime)}
+.timeline-date{font-size:11px;color:var(--gray-400);margin-bottom:6px}
+.timeline-title{font-weight:700;color:var(--navy);margin-bottom:4px}
+.timeline-desc{font-size:13px;color:var(--gray-600)}
+
+/* TABS */
+.inv-geral-tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:2px solid var(--gray-200);overflow-x:auto}
+.tab-btn{background:none;border:none;padding:10px 20px;font-family:var(--font);font-size:13.5px;font-weight:600;color:var(--gray-600);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:all var(--transition)}
+.tab-btn:hover{color:var(--navy)}
+.tab-btn.active{color:var(--navy);border-bottom-color:var(--lime)}
+.tab-content{display:none}
+.tab-content.active{display:block;animation:fadeIn .25s ease}
+.tab-info{padding:12px 0;font-size:13px;color:var(--gray-600);font-style:italic}
+.tab-badge{background:var(--lime);color:var(--navy-dark);font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;z-index:200;background:rgba(10,20,40,.65);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal-box{background:var(--white);border-radius:var(--radius);padding:28px;min-width:400px;max-width:90vw;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-strong);animation:fadeIn .25s ease}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--gray-100)}
+.modal-header h3{font-family:var(--font-cond);font-size:18px;font-weight:800;color:var(--navy)}
+.modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--gray-400);line-height:1;transition:color var(--transition)}
+.modal-close:hover{color:var(--red)}
+
+/* SCANNER */
+.scanner-modal{background:var(--navy);border-radius:var(--radius);overflow:hidden;width:420px;max-width:95vw}
+.scanner-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.1)}
+.scanner-header h3{color:var(--white);font-size:15px;font-weight:700}
+.scanner-header button{background:none;border:none;color:rgba(255,255,255,.6);font-size:24px;cursor:pointer;line-height:1}
+.scanner-header button:hover{color:var(--white)}
+#interactive{width:100%;height:280px;background:#000;position:relative;overflow:hidden}
+#interactive video,#interactive canvas{width:100% !important;height:100% !important;object-fit:cover}
+.scanner-line{position:absolute;left:0;right:0;height:2px;background:var(--lime);animation:scanLine 2s linear infinite;z-index:10}
+@keyframes scanLine{0%,100%{top:20%}50%{top:80%}}
+.scanner-hint{text-align:center;padding:14px;font-size:13px;color:rgba(255,255,255,.55)}
+.scanner-result{padding:12px 20px;background:rgba(139,195,74,.15);border-top:1px solid rgba(139,195,74,.3);text-align:center;font-weight:600;color:var(--lime);display:none}
+
+/* TOAST */
+.toast-container{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--navy);color:var(--white);padding:12px 18px;border-radius:var(--radius-sm);font-size:13.5px;font-weight:500;min-width:260px;max-width:360px;box-shadow:var(--shadow-strong);display:flex;align-items:center;gap:10px;animation:slideUp .3s ease,fadeOut .3s ease 2.7s forwards;border-left:4px solid var(--lime)}
+.toast.error{border-left-color:var(--red)}
+.toast.warning{border-left-color:var(--yellow)}
+.toast.info{border-left-color:#63b3ed}
+@keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeOut{from{opacity:1}to{opacity:0;pointer-events:none}}
+
+/* LOADING */
+.loading-overlay{position:fixed;inset:0;background:rgba(26,46,90,.85);display:none;align-items:center;justify-content:center;z-index:999;flex-direction:column;gap:16px}
+.loading-overlay.show{display:flex}
+.spinner{width:44px;height:44px;border:4px solid rgba(255,255,255,.2);border-top-color:var(--lime);border-radius:50%;animation:spin .8s linear infinite}
+.loading-text{color:var(--white);font-size:14px;font-weight:500}
+@keyframes spin{to{transform:rotate(360deg)}}
+.skeleton{background:linear-gradient(90deg,var(--gray-100) 25%,var(--gray-200) 50%,var(--gray-100) 75%);background-size:200% 100%;animation:skeleton 1.4s ease-in-out infinite;border-radius:4px}
+@keyframes skeleton{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* DASHBOARD MINI CHART (sparkline) */
+.mini-chart-wrap{height:40px;margin-top:6px}
+
+/* INV GERAL STATUS */
+.inv-status-wrap{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.inv-status-card{background:var(--white);border-radius:var(--radius-sm);padding:12px 18px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:2px;min-width:120px;border-left:4px solid var(--gray-200)}
+.inv-status-card.pend{border-left-color:var(--yellow)}
+.inv-status-card.ok{border-left-color:var(--green)}
+.inv-status-card.div{border-left-color:var(--red)}
+.inv-status-num{font-family:var(--font-cond);font-size:24px;font-weight:800;color:var(--navy)}
+.inv-status-lbl{font-size:11px;color:var(--gray-400);font-weight:600}
+
+/* RESPONSIVE */
+@media(max-width:1200px){.kpi-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:960px){.charts-row{grid-template-columns:1fr}.form-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:768px){
+  :root{--sidebar-w:0px}
+  .sidebar{transform:translateX(-100%);width:256px}
+  .sidebar.mobile-open{transform:translateX(0);box-shadow:var(--shadow-strong)}
+  .main-content{margin-left:0 !important}
+  .pages-container{padding:14px}
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .form-grid{grid-template-columns:1fr}
+  .comparison-box{grid-template-columns:repeat(2,1fr)}
+  .page-header{flex-direction:column;align-items:flex-start}
+  .dashboard-filters{justify-content:flex-start}
+  .charts-row{grid-template-columns:1fr}
+  .modal-box{min-width:unset;width:95vw}
+}
+@media(max-width:480px){
+  .kpi-grid{grid-template-columns:1fr}
+  .topbar{padding:0 14px}
+  .topbar-date{display:none}
+}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--gray-200);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--gray-400)}
+
+/* LOGIN */
+.hidden{display:none!important}
+#screen-login{display:flex;min-height:100vh;width:100vw;background:#f4f6fb;color:var(--navy)}
+#screen-login .login-left{flex:1;background:var(--navy);display:flex;flex-direction:column;justify-content:center;padding:48px 56px;position:relative;overflow:hidden}
+#screen-login .login-left:before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 20% 80%,rgba(139,195,74,.12),transparent 60%)}
+#screen-login .login-left>*{position:relative;z-index:1}
+#screen-login .login-brand{font-family:var(--font-cond);font-size:34px;font-weight:800;color:#fff;letter-spacing:2px;margin-bottom:16px}
+#screen-login .login-hero h1{font-size:34px;color:#fff;line-height:1.15;margin-bottom:12px}
+#screen-login .login-hero p{font-size:15px;color:rgba(255,255,255,.65);line-height:1.6;max-width:420px}
+#screen-login .login-right{width:460px;background:#fff;display:flex;align-items:center;justify-content:center;padding:42px}
+#screen-login .login-card{width:100%;max-width:350px}
+#screen-login .login-title{font-size:26px;font-weight:800;margin-bottom:6px;color:var(--navy)}
+#screen-login .login-subtitle{font-size:14px;color:var(--gray-600);margin-bottom:28px;line-height:1.5}
+#screen-login .login-alert{display:none;background:var(--red-light);border:1px solid rgba(229,62,62,.2);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--red);font-weight:600}
+#screen-login .login-footer{margin-top:18px;font-size:12px;color:var(--gray-400);text-align:center}
+#screen-app{display:flex;width:100%;min-height:100vh}
+#screen-app.hidden{display:none!important}
+.logout-btn{margin-top:12px;width:100%;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.08);color:rgba(255,255,255,.75);border-radius:8px;padding:7px;cursor:pointer;font-family:var(--font);font-size:12px;font-weight:600}
+.logout-btn:hover{background:rgba(229,62,62,.25);color:#fff}
+@media(max-width:768px){#screen-login .login-left{display:none}#screen-login .login-right{width:100%;padding:28px}}
+
+
+/* ===== DASHBOARD V1.5 ===== */
+.dash-hero{background:linear-gradient(135deg,var(--navy),var(--navy-light));border-radius:18px;padding:24px 28px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:flex-end;gap:16px;color:var(--white);box-shadow:var(--shadow-strong)}
+.dash-hero h1{font-family:var(--font-cond);font-size:30px;letter-spacing:.5px;margin:4px 0}.dash-hero p{color:rgba(255,255,255,.7);font-size:14px}.dash-eyebrow{font-size:11px;font-weight:800;letter-spacing:1.5px;color:var(--lime);text-transform:uppercase}.dash-period input{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:var(--white)}.dash-period span{color:rgba(255,255,255,.65)}
+.dash-kpi-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:12px;margin-bottom:14px}.dash-kpi{background:var(--white);border:1px solid var(--gray-200);border-radius:16px;padding:16px;box-shadow:var(--shadow);min-height:118px}.dash-kpi.primary{background:var(--navy);color:var(--white);border-color:var(--navy)}.dash-kpi.money{border-left:5px solid var(--lime)}.dash-kpi span{display:block;font-size:11px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--gray-600);margin-bottom:8px}.dash-kpi.primary span{color:rgba(255,255,255,.65)}.dash-kpi strong{display:block;font-family:var(--font-cond);font-size:28px;font-weight:800;color:var(--navy)}.dash-kpi.primary strong{color:var(--lime)}.dash-kpi small{display:block;margin-top:4px;color:var(--gray-400);font-size:12px}.dash-kpi.primary small{color:rgba(255,255,255,.6)}.dash-kpi.compact strong{font-size:30px}.dash-progress{height:6px;background:var(--gray-100);border-radius:20px;overflow:hidden;margin-top:12px}.dash-progress i{display:block;height:100%;background:var(--lime);border-radius:20px;transition:width .8s ease}.dash-kpi.primary .dash-progress{background:rgba(255,255,255,.12)}
+.dash-insights{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}.insight-card{background:var(--white);border-radius:14px;border:1px solid var(--gray-200);padding:14px 16px;box-shadow:var(--shadow)}.insight-card b{display:block;font-size:11px;color:var(--lime-dark);letter-spacing:.8px;text-transform:uppercase;margin-bottom:5px}.insight-card span{font-size:13px;color:var(--navy);line-height:1.35}.dashboard-filters.clean{background:transparent;margin-bottom:14px;padding:0;justify-content:flex-start}.dash-chart-grid{display:grid;grid-template-columns:2fr 1fr;gap:14px}.dash-panel{background:var(--navy);border-radius:16px;padding:18px;box-shadow:var(--shadow);min-height:230px}.dash-panel.large{min-height:285px}.dash-panel-title{text-align:left;color:var(--white);font-family:var(--font-cond);font-weight:800;letter-spacing:.8px;text-transform:uppercase;font-size:14px;margin-bottom:14px}.dash-panel .gauge-value{margin-top:-22px;color:var(--white)}
+@media(max-width:1200px){.dash-kpi-grid{grid-template-columns:repeat(4,1fr)}.dash-chart-grid{grid-template-columns:1fr}.dash-insights{grid-template-columns:1fr}}@media(max-width:720px){.dash-hero{flex-direction:column;align-items:flex-start}.dash-kpi-grid{grid-template-columns:repeat(2,1fr)}.dash-kpi{min-height:105px}.dash-period{width:100%;flex-wrap:wrap}.dash-period input{max-width:140px}}
+
+
+/* v1.6 dashboard e responsividade */
+.dash-kpi-grid-main{grid-template-columns:repeat(4,minmax(180px,1fr))!important}
+.dash-panel{min-height:260px}.dash-panel.large{min-height:320px}.dash-panel canvas{max-height:260px!important}
+.dash-panel .gauge-value{font-size:24px;margin-top:-18px}
+@media(max-width:1100px){.dash-kpi-grid-main{grid-template-columns:repeat(2,minmax(0,1fr))!important}.dash-chart-grid{grid-template-columns:1fr!important}.dash-panel,.dash-panel.large{min-height:260px}}
+@media(max-width:768px){body{display:block}.sidebar{width:256px;transform:translateX(-100%)}.sidebar.mobile-open{transform:translateX(0);box-shadow:var(--shadow-strong)}.main-content{margin-left:0!important;width:100%}.topbar{height:auto;min-height:56px;padding:10px 14px}.pages-container{padding:12px}.dash-hero{padding:18px;gap:12px}.dash-hero h1{font-size:24px}.dash-kpi-grid-main{grid-template-columns:1fr!important}.dash-insights{grid-template-columns:1fr!important}.filter-select,.search-input,.form-input{min-height:42px}.filters-bar,.dashboard-filters{gap:8px}.filters-bar>*{width:100%;min-width:0}.data-table{font-size:12px}.data-table thead th,.data-table tbody td{padding:9px 10px}.form-grid,.form-grid-2{grid-template-columns:1fr!important}.content,.pages-container{overflow-x:hidden}.table-wrapper{max-width:100%;overflow-x:auto}}
+@media(max-width:480px){.dash-kpi strong{font-size:24px}.dash-panel,.dash-panel.large{padding:14px;min-height:230px}.dash-panel canvas{max-height:210px!important}.toast-container{left:12px;right:12px;bottom:12px}.toast{min-width:0;width:100%}}
+
+
+/* ===== MOBILE FIX v1.7 ===== */
+@media(max-width:768px){
+  html,body{width:100%;max-width:100%;overflow-x:hidden}
+  .topbar{position:sticky;top:0;z-index:80}
+  .pages-container{width:100%;max-width:100%;padding:12px;overflow-x:hidden}
+  .page,.table-card,.panel,.upload-card,.form-card{max-width:100%;overflow:hidden}
+  .table-wrapper{display:block;width:100%;max-width:100%;overflow-x:auto!important;overflow-y:hidden!important;-webkit-overflow-scrolling:touch;border-radius:10px}
+  .table-wrapper::after{display:block}
+  .table-wrapper .data-table{width:max-content!important;min-width:980px!important;table-layout:auto}
+  .table-wrapper .data-table th,.table-wrapper .data-table td{white-space:nowrap}
+  .table-wrapper .data-table td.wrap{white-space:normal;min-width:220px}
+  .charts-row,.dash-chart-grid{grid-template-columns:1fr!important}
+  .kpi-grid,.dash-kpi-grid,.dash-kpi-grid-main{grid-template-columns:1fr!important}
+  .form-actions,.header-actions{width:100%;justify-content:flex-start;flex-wrap:wrap}
+  .btn-primary,.btn-secondary{min-height:42px}
+}
+@media(max-width:480px){
+  .table-wrapper .data-table{min-width:1050px!important}
+  .page-header h1{font-size:20px}
+  .sidebar{width:82vw!important}
+}
+
+
+/* ===== FIXES v1.8 ===== */
+.mobile-sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:90}
+.mobile-sidebar-backdrop.show{display:block}
+@media(max-width:768px){
+  html,body{height:auto!important;min-height:100%;overflow-y:auto!important;overflow-x:hidden!important}
+  #screen-app{min-height:100dvh}
+  .main-content{min-height:100dvh}
+  .pages-container{overflow-y:visible!important;padding-bottom:48px}
+  .page,.table-card,.panel,.upload-card,.form-card{overflow:visible!important}
+  .table-card{width:100%}
+  .table-wrapper{overflow-x:auto!important;overflow-y:visible!important;touch-action:pan-x pan-y}
+  .sidebar{z-index:120;height:100dvh;overflow-y:auto!important}
+  .sidebar.mobile-open + .mobile-sidebar-backdrop{display:block}
+  .sidebar-toggle{display:flex!important}
+}
+
+
+
+/* ===== AJUSTES FIREBASE/MOBILE ===== */
+.table-wrapper,
+.table-wrap{
+  overflow-x:auto!important;
+  overflow-y:visible!important;
+  -webkit-overflow-scrolling:touch;
+  max-width:100%;
+}
+.data-table{min-width:920px;}
+@media(max-width:768px){
+  html,body{height:auto;min-height:100%;overflow-x:hidden;overflow-y:auto!important;}
+  #screen-app.active{display:block!important;min-height:100vh;overflow-y:auto!important;}
+  .main,.main-content{margin-left:0!important;width:100%!important;min-height:100vh;overflow-y:visible!important;}
+  .content,.pages-container{padding:12px!important;overflow-y:visible!important;}
+  .sidebar{transform:translateX(-105%);width:280px!important;max-width:86vw;}
+  .sidebar.mobile-open,.sidebar.open{transform:translateX(0)!important;}
+  .modal,.modal-box{max-width:96vw!important;}
+  .login-left{display:none!important;}
+  .login-right{width:100%!important;min-height:100vh;padding:28px 20px!important;}
+}
+
+</style>
+</head>
+<body>
+
+<div id="screen-login">
+  <div class="login-left">
+    <div class="login-brand">SDB</div>
+    <div class="login-hero">
+      <h1>Sistema de Controle de Inventário</h1>
+      <p>Inventário rotativo e geral com Google Apps Script, Google Sheets e interface web responsiva.</p>
+    </div>
+  </div>
+  <div class="login-right">
+    <div class="login-card">
+      <div class="login-title">Entrar no sistema</div>
+      <div class="login-subtitle">Use as credenciais cadastradas na aba USUARIOS.</div>
+      <div id="loginAlert" class="login-alert"></div>
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label>E-mail</label>
+          <input class="form-input" type="email" id="loginEmail" placeholder="admin@sdb.com.br" autocomplete="email" required>
+        </div>
+        <div class="form-group">
+          <label>Senha</label>
+          <input class="form-input" type="password" id="loginPwd" placeholder="••••••••" autocomplete="current-password" required>
+        </div>
+        <button type="submit" class="btn-primary" style="width:100%;justify-content:center" id="loginBtn">Entrar</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div id="screen-app" class="hidden">
+
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loadingText">Carregando...</div>
+</div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="logo">
+      <div class="logo-icon logo-diamond" aria-label="SDB Logo">
+        <svg viewBox="0 0 100 86" role="img" focusable="false">
+          <polygon points="50,84 4,31 20,6 80,6 96,31" fill="#8bc34a"/>
+          <path d="M4 31H96M20 6L33 31L50 6L67 31L80 6M33 31L50 84M67 31L50 84" fill="none" stroke="#1a2e5a" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+          <path d="M21 6L5 31L33 31L50 6L67 31L95 31L79 6" fill="none" stroke="rgba(255,255,255,.30)" stroke-width="2" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <span class="logo-text">SDB</span>
+    </div>
+    <button class="sidebar-toggle" id="sidebarToggle"><span></span><span></span><span></span></button>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <span class="nav-label">PRINCIPAL</span>
+      <a href="#" class="nav-item active" data-page="dashboard">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        <span>Dashboard</span>
+      </a>
+    </div>
+    <div class="nav-section">
+      <span class="nav-label">INVENTÁRIO ROTATIVO</span>
+      <a href="#" class="nav-item" data-page="contagem">
+        <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/><path d="M9 12l2 2 4-4"/></svg>
+        <span>Nova Contagem</span>
+      </a>
+      <a href="#" class="nav-item" data-page="ultimociclo">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        <span>Último Ciclo</span>
+      </a>
+      <a href="#" class="nav-item" data-page="tabelageral">
+        <svg viewBox="0 0 24 24"><path d="M3 3h18v18H3zM3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
+        <span>Tabela Geral</span>
+      </a>
+    </div>
+    <div class="nav-section">
+      <span class="nav-label">GESTÃO</span>
+      <a href="#" class="nav-item" data-page="importar">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+        <span>Importar Saldo</span>
+      </a>
+      <a href="#" class="nav-item" data-page="sku">
+        <svg viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><circle cx="7" cy="7" r="1.5"/></svg>
+        <span>Cadastro SKU</span>
+      </a>
+      <a href="#" class="nav-item" data-page="ajustes">
+        <svg viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        <span>Ajustes</span>
+      </a>
+      <a href="#" class="nav-item" data-page="enderecamento">
+        <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span>Endereçamento</span>
+      </a>
+      <a href="#" class="nav-item" data-page="usuarios">
+        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        <span>Usuários</span>
+      </a>
+    </div>
+    <div class="nav-section">
+      <span class="nav-label">INVENTÁRIO GERAL</span>
+      <a href="#" class="nav-item" data-page="invgeral">
+        <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h7"/><circle cx="17" cy="18" r="3"/><path d="M17 15v3l2 1"/></svg>
+        <span>Inventário Geral</span>
+      </a>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-info">
+      <div class="user-avatar" id="userAvatar">AD</div>
+      <div class="user-details">
+        <span class="user-name" id="userName">Admin</span>
+        <span class="user-role" id="userRole">ADMINISTRADOR</span>
+      </div>
+    </div>
+    <button class="logout-btn" onclick="handleLogout()">Sair</button>
+  </div>
+</aside>
+<div class="mobile-sidebar-backdrop" id="mobileSidebarBackdrop"></div>
+
+<!-- MAIN -->
+<main class="main-content" id="mainContent">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-btn" id="menuBtn"><span></span><span></span><span></span></button>
+      <div class="page-title" id="pageTitle">Dashboard</div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-date">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span id="currentDate"></span>
+      </div>
+      <button class="notif-btn" onclick="showToast('Sem novas notificações','info')">
+        <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <span class="notif-badge" id="notifBadge">0</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="pages-container">
+
+    <!-- ==================== DASHBOARD ==================== -->
+    <div class="page active" id="page-dashboard">
+      <div class="dash-hero">
+        <div>
+          <div class="dash-eyebrow">Visão gerencial</div>
+          <h1>Dashboard de Inventário</h1>
+          <p>Acompanhe cobertura, acurácia, divergência financeira e evolução das contagens.</p>
+        </div>
+        <div class="period-selector dash-period">
+          <input type="date" id="dateFrom" value="2025-08-18">
+          <span>até</span>
+          <input type="date" id="dateTo">
+          <button class="btn-primary" onclick="loadDashboard()">Atualizar</button>
+        </div>
+      </div>
+
+      <div class="dash-kpi-grid dash-kpi-grid-main">
+        <div class="dash-kpi primary"><span>Cobertura</span><strong id="kpiContada">—</strong><small id="kpiContTotal">—</small><div class="dash-progress"><i id="barContada" style="width:0%"></i></div></div>
+        <div class="dash-kpi"><span>Acurácia unidade</span><strong id="kpiAcuUnit">—</strong><small>Meta 99,85%</small><div class="dash-progress"><i id="barAcuUnit" style="width:0%"></i></div></div>
+        <div class="dash-kpi"><span>Acurácia financeira</span><strong id="kpiAcuFin">—</strong><small>Meta 99,85%</small><div class="dash-progress"><i id="barAcuFin" style="width:0%"></i></div></div>
+        <div class="dash-kpi money"><span>Divergência R$</span><strong id="kpiDifFin">—</strong><small>Saldo financeiro das diferenças</small></div>
+      </div>
+
+      <div class="dash-insights" id="dashInsights">
+        <div class="insight-card"><b>Insight</b><span id="insightMain">Carregando dados...</span></div>
+        <div class="insight-card"><b>Prioridade</b><span id="insightPriority">—</span></div>
+        <div class="insight-card"><b>Risco</b><span id="insightRisk">—</span></div>
+      </div>
+
+      <div class="dashboard-filters clean">
+        <div class="filter-group"><label>ARMAZÉM</label><select id="fArmazem"><option value="">Todos</option><option>01</option><option>02</option><option>03</option><option>10</option><option>98</option></select></div>
+        <div class="filter-group"><label>CICLO</label><select id="fCiclo"><option value="ultimo">Último ciclo</option><option value="todos">Todos</option></select></div>
+      </div>
+
+      <div class="dash-chart-grid">
+        <div class="dash-panel large"><div class="dash-panel-title">Divergência unitária por mês</div><canvas id="chartDifUnit" height="115"></canvas></div>
+        <div class="dash-panel"><div class="dash-panel-title">Acurácia financeira</div><canvas id="chartGaugeFinanceiro" height="120"></canvas><div class="gauge-value" id="gaugeFinVal">—</div></div>
+        <div class="dash-panel large"><div class="dash-panel-title">SKUs contados por mês</div><canvas id="chartSKU" height="115"></canvas></div>
+        <div class="dash-panel"><div class="dash-panel-title">Acurácia unidade</div><canvas id="chartGaugeUnidade" height="120"></canvas><div class="gauge-value" id="gaugeUnitVal">—</div></div>
+      </div>
+    </div>
+
+    <!-- ==================== NOVA CONTAGEM ==================== -->
+    <div class="page" id="page-contagem">
+      <div class="page-header">
+        <h1>NOVA CONTAGEM</h1>
+        <button class="btn-primary" id="btnBarcode">
+          <svg viewBox="0 0 24 24"><rect x="2" y="4" width="3" height="16"/><rect x="7" y="4" width="1.5" height="16"/><rect x="10.5" y="4" width="3" height="16"/><rect x="15.5" y="4" width="1.5" height="16"/><rect x="19" y="4" width="3" height="16"/></svg>
+          Ler Código de Barras
+        </button>
+      </div>
+      <div class="form-card">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>SKU *</label>
+            <div class="input-with-icon">
+              <input type="text" id="inputSKU" list="skuDatalist" placeholder="Digite, selecione ou escaneie o SKU" class="form-input" autocomplete="off">
+              <button class="input-icon-btn" onclick="searchSKU()"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Descrição</label>
+            <input type="text" id="inputDescricao" placeholder="Preenchido automaticamente" class="form-input" readonly>
+          </div>
+          <div class="form-group">
+            <label>Armazém *</label>
+            <select id="inputArmazem" class="form-input">
+              <option value="">Selecione...</option>
+              <option value="01">01</option><option value="02">02</option>
+              <option value="03">03</option><option value="10">10</option><option value="98">98</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Quantidade Física *</label>
+            <input type="number" id="inputQtd" placeholder="0" step="0.001" min="0" class="form-input large-input" inputmode="decimal">
+          </div>
+          <div class="form-group">
+            <label>Ciclo (Auto)</label>
+            <input type="text" id="inputCiclo" placeholder="—" class="form-input" readonly>
+          </div>
+          <div class="form-group">
+            <label>Data / Hora</label>
+            <input type="text" id="inputDataHora" class="form-input" readonly>
+          </div>
+        </div>
+
+        <div class="comparison-box" id="comparisonBox" style="display:none">
+          <div class="comp-item"><span class="comp-label">Qtd. Sistema</span><span class="comp-value" id="compSistema">—</span></div>
+          <div class="comp-item"><span class="comp-label">Qtd. Física</span><span class="comp-value" id="compFisica">—</span></div>
+          <div class="comp-item"><span class="comp-label">Diferença</span><span class="comp-value" id="compDif">—</span></div>
+          <div class="comp-item"><span class="comp-label">Status</span><span class="status-badge" id="compStatus">—</span></div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn-secondary" onclick="clearContagemForm()">Limpar</button>
+          <button class="btn-primary" onclick="saveContagem()">
+            <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Salvar Contagem
+          </button>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <div style="padding:14px 16px;font-family:var(--font-cond);font-size:13px;font-weight:700;color:var(--navy);border-bottom:1px solid var(--gray-100)">CONTAGENS RECENTES — HOJE</div>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead><tr><th>Hora</th><th>SKU</th><th>Descrição</th><th>Armazém</th><th>Qtd. Física</th><th>Qtd. Sistema</th><th>Diferença</th><th>Ciclo</th><th>Status</th></tr></thead>
+            <tbody id="tbodyContagensHoje"><tr><td colspan="9" class="empty-row">Nenhuma contagem hoje ainda</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== ÚLTIMO CICLO ==================== -->
+    <div class="page" id="page-ultimociclo">
+      <div class="page-header">
+        <h1>ÚLTIMO CICLO CONTADO</h1>
+        <div class="header-actions">
+          <button class="btn-secondary" onclick="exportData('ultimociclo')">
+            <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            Exportar Excel
+          </button>
+          <button class="btn-secondary" onclick="exportCSV('ultimociclo')">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Exportar CSV
+          </button>
+        </div>
+      </div>
+      <div class="filters-bar">
+        <input type="text" placeholder="🔍 Buscar SKU / Descrição..." class="search-input" id="searchUC">
+        <select class="filter-select" id="filterUCSit"><option value="">Situação</option><option value="BATENDO">✅ Batendo</option><option value="DEFICIT">🔴 Déficit</option><option value="SUPERAVIT">🟡 Superávit</option></select>
+        <select class="filter-select" id="filterUCArm"><option value="">Armazém</option><option>01</option><option>02</option><option>03</option><option>10</option><option>98</option></select>
+      </div>
+      <div class="table-card">
+        <div class="table-wrapper">
+          <table class="data-table" id="tableUC">
+            <thead><tr>
+              <th onclick="sortTable('tableUC',0)">Data ↕</th>
+              <th onclick="sortTable('tableUC',1)">SKU ↕</th>
+              <th onclick="sortTable('tableUC',2)">Armazém ↕</th>
+              <th onclick="sortTable('tableUC',3)">Descrição ↕</th>
+              <th onclick="sortTable('tableUC',4)">Qtd. Sistema ↕</th>
+              <th onclick="sortTable('tableUC',5)">Qtd. Físico ↕</th>
+              <th onclick="sortTable('tableUC',6)">Diferença ↕</th>
+              <th>Últ. Ciclo</th><th>Ajuste</th>
+              <th onclick="sortTable('tableUC',9)">Unitário ↕</th>
+              <th onclick="sortTable('tableUC',10)">Dif. Financeira ↕</th>
+              <th>Status</th>
+            </tr></thead>
+            <tbody id="tbodyUC"></tbody>
+            <tfoot><tr class="table-total" id="totalUC">
+              <td colspan="4">Total</td>
+              <td id="totSis">—</td><td id="totFis">—</td><td id="totDif">—</td>
+              <td></td><td></td><td id="totUnit">—</td><td id="totDifFin">—</td><td></td>
+            </tr></tfoot>
+          </table>
+        </div>
+        <div class="pagination">
+          <span class="pagination-info" id="infoUC">0 registros</span>
+          <div class="pagination-btns" id="paginUC"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TABELA GERAL ==================== -->
+    <div class="page" id="page-tabelageral">
+      <div class="page-header">
+        <h1>TABELA GERAL DE CONTAGENS</h1>
+        <div class="header-actions">
+          <button class="btn-secondary" onclick="exportData('geral')">
+            <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            Exportar
+          </button>
+        </div>
+      </div>
+      <div class="filters-bar">
+        <input type="text" placeholder="🔍 Buscar..." class="search-input" id="searchGeral">
+        <select class="filter-select" id="filterGeralSit"><option value="">Situação</option><option value="BATENDO">✅ Batendo</option><option value="DEFICIT">🔴 Déficit</option><option value="SUPERAVIT">🟡 Superávit</option></select>
+        <select class="filter-select" id="filterGeralArm"><option value="">Armazém</option><option>01</option><option>02</option><option>03</option><option>10</option><option>98</option></select>
+        <select class="filter-select" id="filterGeralCiclo"><option value="">Ciclo</option><option value="ultimo">Último</option><option value="anteriores">Anteriores</option></select>
+        <select class="filter-select" id="filterGeralData"><option value="">Período rápido</option><option value="hoje">Hoje</option><option value="semana">Esta Semana</option><option value="mes">Este Mês</option></select>
+        <input type="date" class="filter-select" id="filterGeralDataIni" title="Data inicial">
+        <input type="date" class="filter-select" id="filterGeralDataFim" title="Data final">
+      </div>
+      <div class="table-card">
+        <div class="table-wrapper">
+          <table class="data-table" id="tableGeral">
+            <thead><tr>
+              <th>Data/Hora</th><th>SKU</th><th>Armazém</th><th>Descrição</th>
+              <th>Qtd. Sistema</th><th>Qtd. Físico</th><th>Dif. Unit.</th>
+              <th>Dif. Financeira</th><th>Ciclo</th><th>Usuário</th><th>Status</th>
+            </tr></thead>
+            <tbody id="tbodyGeral"></tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <span class="pagination-info" id="infoGeral">0 registros</span>
+          <div class="pagination-btns" id="paginGeral"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== IMPORTAR SALDO ==================== -->
+    <div class="page" id="page-importar">
+      <div class="page-header"><h1>IMPORTAR SALDO DO SISTEMA</h1></div>
+      <div class="upload-card">
+        <div class="upload-area" id="uploadArea" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleDrop(event,'saldo')">
+          <svg class="upload-icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+          <p><strong>Arraste e solte seu arquivo aqui</strong></p>
+          <span>ou</span>
+          <label class="btn-primary" style="cursor:pointer">
+            Selecionar Arquivo
+            <input type="file" id="fileInputSaldo" accept=".xlsx,.xls,.csv" hidden onchange="processFile(this.files[0],'saldo')">
+          </label>
+          <div class="upload-fields">
+            <strong>Campos obrigatórios do arquivo:</strong>
+            CODIGO · ARMAZEM · SALDO_ATUAL · VALOR_UNITARIO · DESCRICAO · UNIDADE · REQUISICOES_ABERTAS · DATA_RELATORIO
+          </div>
+          <p class="upload-hint">Formatos aceitos: .xlsx, .xls, .csv — Máx. 50.000 linhas</p>
+        </div>
+        <div id="uploadPreviewSaldo" style="display:none">
+          <div class="preview-header">
+            <h3>Pré-visualização (primeiras 5 linhas)</h3>
+            <div class="preview-info" id="previewInfoSaldo"></div>
+          </div>
+          <div class="table-wrapper"><table class="data-table" id="previewTableSaldo"><thead><tr id="previewHdrSaldo"></tr></thead><tbody id="previewBodySaldo"></tbody></table></div>
+          <div id="previewWarnSaldo" style="margin-top:10px"></div>
+          <div class="form-actions">
+            <button class="btn-secondary" onclick="cancelUpload('saldo')">Cancelar</button>
+            <button class="btn-primary" onclick="confirmImport('saldo')">
+              <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+              Confirmar Importação
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="history-card">
+        <div class="preview-header">
+          <h3>Histórico de Importações</h3>
+          <button class="btn-danger admin-only" onclick="clearImportHistory()">🗑 Limpar Histórico</button>
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table"><thead><tr><th>Data/Hora</th><th>Arquivo</th><th>Registros</th><th>Usuário</th><th>Status</th></tr></thead>
+          <tbody id="tbodyImpHist"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== CADASTRO SKU ==================== -->
+    <div class="page" id="page-sku">
+      <div class="page-header">
+        <h1>CADASTRO DE SKU</h1>
+        <div class="header-actions">
+          <label class="btn-secondary" style="cursor:pointer">
+            <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            Upload em Massa
+            <input type="file" accept=".xlsx,.csv" hidden onchange="processFile(this.files[0],'sku')">
+          </label>
+          <button class="btn-primary" onclick="openSKUModal()">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Novo SKU
+          </button>
+        </div>
+      </div>
+      <div class="upload-fields" style="margin-bottom:12px">
+        <strong>Upload em massa — colunas obrigatórias:</strong>
+        SKU · DESCRICAO · UNIDADE · ARMAZEM_PADRAO
+      </div>
+      <div id="uploadPreviewSKU" style="display:none;margin-bottom:16px" class="table-card">
+        <div class="preview-header" style="padding:12px 16px">
+          <h3>Pré-visualização do Upload de SKU</h3>
+          <div class="preview-info" id="previewInfoSKU"></div>
+        </div>
+        <div class="table-wrapper"><table class="data-table"><thead><tr id="previewHdrSKU"></tr></thead><tbody id="previewBodySKU"></tbody></table></div>
+        <div class="form-actions" style="padding:12px 16px"><button class="btn-secondary" onclick="cancelUpload('sku')">Cancelar</button><button class="btn-primary" onclick="confirmImport('sku')">Confirmar Importação</button></div>
+      </div>
+      <div class="filters-bar">
+        <input type="text" placeholder="🔍 Buscar SKU ou Descrição..." class="search-input" id="searchSKU" oninput="renderSKU()">
+        <select class="filter-select" id="filterSKUArm" onchange="renderSKU()"><option value="">Armazém Padrão</option><option>01</option><option>02</option><option>03</option><option>10</option><option>98</option></select>
+      </div>
+      <div class="table-card">
+        <div class="table-wrapper">
+          <table class="data-table"><thead><tr><th>SKU</th><th>Descrição</th><th>Unidade</th><th>Armazém Padrão</th><th>Ações</th></tr></thead>
+          <tbody id="tbodySKU"></tbody></table>
+        </div>
+        <div class="pagination">
+          <span class="pagination-info" id="infoSKU">0 registros</span>
+          <div class="pagination-btns" id="paginSKU"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== AJUSTES ==================== -->
+    <div class="page" id="page-ajustes">
+      <div class="page-header">
+        <h1>HISTÓRICO DE AJUSTES</h1>
+        <div class="header-actions">
+        <button class="btn-danger admin-only" onclick="clearAjustes()">🗑 Limpar Histórico</button>
+        <button class="btn-primary" onclick="openAjusteModal()">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Registrar Ajuste
+        </button>
+        </div>
+      </div>
+      <div class="filters-bar">
+        <input type="text" placeholder="🔍 Buscar SKU..." class="search-input" id="searchAjuste" oninput="renderTimeline()">
+        <select class="filter-select" id="filterAjusteTipo" onchange="renderTimeline()"><option value="">Tipo</option><option value="AJUSTE POSITIVO">Positivo</option><option value="AJUSTE NEGATIVO">Negativo</option></select>
+      </div>
+      <div class="timeline" id="ajustesTimeline"></div>
+    </div>
+
+    <!-- ==================== ENDEREÇAMENTO ==================== -->
+    <div class="page" id="page-enderecamento">
+      <div class="page-header">
+        <h1>ENDEREÇAMENTO — POSIÇÃO DOS ITENS</h1>
+        <div class="header-actions">
+          <label class="btn-secondary" style="cursor:pointer">
+            <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            Upload em Massa
+            <input type="file" accept=".xlsx,.csv" hidden onchange="processFile(this.files[0],'end')">
+          </label>
+          <button class="btn-primary" onclick="openEndModal()">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Novo Endereço
+          </button>
+        </div>
+      </div>
+      <div class="upload-fields" style="margin-bottom:12px">
+        <strong>Upload em massa — colunas obrigatórias:</strong>
+        CODIGO · ARMAZEM &nbsp;&nbsp; <strong>Opcionais:</strong> DATA · ENDERECO
+      </div>
+      <div id="uploadPreviewEnd" style="display:none;margin-bottom:16px" class="table-card">
+        <div class="preview-header" style="padding:12px 16px">
+          <h3>Pré-visualização do Upload de Endereçamento</h3>
+          <div class="preview-info" id="previewInfoEnd"></div>
+        </div>
+        <div class="table-wrapper"><table class="data-table"><thead><tr id="previewHdrEnd"></tr></thead><tbody id="previewBodyEnd"></tbody></table></div>
+        <div class="form-actions" style="padding:12px 16px"><button class="btn-secondary" onclick="cancelUpload('end')">Cancelar</button><button class="btn-primary" onclick="confirmImport('end')">Confirmar Importação</button></div>
+      </div>
+      <div class="filters-bar">
+        <input type="text" placeholder="🔍 Buscar código ou endereço..." class="search-input" id="searchEnd" oninput="renderEnderecamento()">
+        <select class="filter-select" id="filterEndArm" onchange="renderEnderecamento()"><option value="">Armazém</option><option>01</option><option>02</option><option>03</option><option>10</option><option>98</option></select>
+      </div>
+      <div class="table-card">
+        <div class="table-wrapper">
+          <table class="data-table"><thead><tr><th>Código</th><th>Descrição</th><th>Armazém</th><th>Endereço</th><th>Data</th><th>Ações</th></tr></thead>
+          <tbody id="tbodyEnd"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== USUÁRIOS ==================== -->
+    <div class="page" id="page-usuarios">
+      <div class="page-header">
+        <h1>CADASTRO DE USUÁRIOS</h1>
+        <button class="btn-primary" onclick="openUserModal()">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Novo Usuário
+        </button>
+      </div>
+      <div class="filters-bar">
+        <input type="text" placeholder="🔍 Buscar nome ou e-mail..." class="search-input" id="searchUser" oninput="renderUsuarios()">
+      </div>
+      <div class="table-card">
+        <div class="table-wrapper">
+          <table class="data-table"><thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Status</th><th>Último Login</th><th>Ações</th></tr></thead>
+          <tbody id="tbodyUsuarios"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== INVENTÁRIO GERAL ==================== -->
+    <div class="page" id="page-invgeral">
+      <div class="page-header"><h1>INVENTÁRIO GERAL</h1></div>
+
+      <div class="inv-status-wrap" id="invStatusWrap">
+        <div class="inv-status-card pend"><div class="inv-status-num" id="invTotPend">—</div><div class="inv-status-lbl">Pendentes</div></div>
+        <div class="inv-status-card ok"><div class="inv-status-num" id="invTotOk">—</div><div class="inv-status-lbl">Finalizados</div></div>
+        <div class="inv-status-card div"><div class="inv-status-num" id="invTotDiv">—</div><div class="inv-status-lbl">Divergentes</div></div>
+        <div class="inv-status-card"><div class="inv-status-num" id="invTotTotal">—</div><div class="inv-status-lbl">Total Itens</div></div>
+        <div class="inv-status-card div"><div class="inv-status-num" id="invValorDivergencia">—</div><div class="inv-status-lbl">Valor Divergência</div></div>
+        <div class="inv-status-card ok"><div class="inv-status-num" id="invFinal1">—</div><div class="inv-status-lbl">Finalizados na 1ª</div></div>
+        <div class="inv-status-card ok"><div class="inv-status-num" id="invFinal2">—</div><div class="inv-status-lbl">Finalizados na 2ª</div></div>
+        <div class="inv-status-card ok"><div class="inv-status-num" id="invFinal3">—</div><div class="inv-status-lbl">Finalizados na 3ª</div></div>
+      </div>
+
+      <div class="inv-geral-tabs">
+        <button class="tab-btn active" onclick="switchInvTab('importacao',this)">📥 Importar Saldo</button>
+        <button class="tab-btn" onclick="switchInvTab('primeira',this)">1ª Contagem <span class="tab-badge" id="badge1">0</span></button>
+        <button class="tab-btn" onclick="switchInvTab('segunda',this)">2ª Contagem <span class="tab-badge" id="badge2">0</span></button>
+        <button class="tab-btn" onclick="switchInvTab('terceira',this)">3ª Contagem <span class="tab-badge" id="badge3">0</span></button>
+        <button class="tab-btn" onclick="switchInvTab('resultado',this)">✅ Resultado Final</button>
+      </div>
+
+      <div class="tab-content active" id="tab-importacao">
+        <div class="upload-card">
+          <div class="upload-area" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleDrop(event,'invgeral')">
+            <svg class="upload-icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+            <p><strong>Importar Saldo do Inventário Geral</strong></p>
+            <span>ou</span>
+            <label class="btn-primary" style="cursor:pointer">
+              Selecionar Arquivo
+              <input type="file" accept=".xlsx,.csv" hidden onchange="processFile(this.files[0],'invgeral')">
+            </label>
+            <div class="upload-fields">
+              <strong>Campos obrigatórios:</strong>
+              CODIGO · SALDO_ATUAL · ARMAZEM · VALOR_UNITARIO · DATA · DOC · LOTE · ENDERECO
+            </div>
+          </div>
+          <div id="uploadPreviewInvGeral" style="display:none">
+            <div class="preview-header"><h3>Pré-visualização</h3><div class="preview-info" id="previewInfoInvGeral"></div></div>
+            <div class="table-wrapper"><table class="data-table"><thead><tr id="previewHdrInvGeral"></tr></thead><tbody id="previewBodyInvGeral"></tbody></table></div>
+            <div class="form-actions">
+              <button class="btn-secondary" onclick="cancelUpload('invgeral')">Cancelar</button>
+              <button class="btn-primary" onclick="confirmImport('invgeral')">Confirmar Importação</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab-primeira">
+        <div class="form-card">
+          <h3 style="font-family:var(--font-cond);font-size:16px;font-weight:800;color:var(--navy);margin-bottom:16px">1ª Contagem</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>SKU *</label>
+              <div class="input-with-icon">
+                <input type="text" id="inv1SKU" list="skuDatalist" class="form-input" placeholder="Digite, selecione ou bipe o SKU" autocomplete="off">
+                <button class="input-icon-btn" onclick="searchInvSKU()"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
+              </div>
+              <button type="button" class="btn-secondary" style="margin-top:6px;padding:7px 10px;font-size:12px" onclick="openBarcodeModalFor('inv1SKU')">Bipar código</button>
+            </div>
+            <div class="form-group"><label>Armazém *</label><select id="inv1Arm" class="form-input"><option value="">Selecione...</option><option>01</option><option>02</option><option>03</option><option>10</option><option>98</option></select></div>
+            <div class="form-group"><label>Quantidade *</label><input type="number" id="inv1Qtd" class="form-input large-input" placeholder="0" step="0.001" min="0" inputmode="decimal"></div>
+          </div>
+          <div class="form-actions">
+            <button class="btn-primary" onclick="saveInvContagem(1)">Registrar 1ª Contagem</button>
+          </div>
+        </div>
+        <div class="filters-bar"><input id="filterInv1" class="search-input" placeholder="Buscar por SKU, descrição, armazém, endereço ou status" oninput="renderInv1Table()"></div>
+        <div class="table-card">
+          <div class="table-wrapper"><table class="data-table"><thead><tr><th>SKU</th><th>Descrição</th><th>Armazém</th><th>Endereço</th><th>Saldo Sistema</th><th>Valor Unit.</th><th>1ª Contagem</th><th>Dif. Unit.</th><th>Dif. R$</th><th>Status</th><th>Ação</th></tr></thead><tbody id="tbodyInv1"></tbody></table></div>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab-segunda">
+        <p class="tab-info">⚠️ Itens que divergiram na 1ª contagem aguardam 2ª contagem</p>
+        <div class="form-card" id="inv2Form" style="display:none">
+          <h3 style="font-family:var(--font-cond);font-size:16px;font-weight:800;color:var(--navy);margin-bottom:16px">2ª Contagem — <span id="inv2SKULabel"></span></h3>
+          <div class="form-grid-2">
+            <div class="form-group"><label>Quantidade *</label><input type="number" id="inv2Qtd" class="form-input large-input" placeholder="0" step="0.001" inputmode="decimal"></div>
+            <div class="form-group" style="justify-content:flex-end;flex-direction:row;align-items:flex-end;gap:10px">
+              <button class="btn-secondary" onclick="cancelInv2()">Cancelar</button>
+              <button class="btn-primary" onclick="saveInvContagem(2)">Confirmar 2ª Contagem</button>
+            </div>
+          </div>
+        </div>
+        <div class="filters-bar"><input id="filterInv2" class="search-input" placeholder="Buscar por SKU, descrição, armazém, endereço ou status" oninput="renderInv2Table()"></div>
+        <div class="table-card"><div class="table-wrapper"><table class="data-table"><thead><tr><th>SKU</th><th>Descrição</th><th>Armazém</th><th>Endereço</th><th>Saldo Sistema</th><th>Valor Unit.</th><th>1ª Contagem</th><th>2ª Contagem</th><th>Dif. R$</th><th>Status</th><th>Ação</th></tr></thead><tbody id="tbodyInv2"></tbody></table></div></div>
+      </div>
+
+      <div class="tab-content" id="tab-terceira">
+        <p class="tab-info">⛔ Itens que divergiram nas 2 primeiras contagens — 3ª é definitiva</p>
+        <div class="form-card" id="inv3Form" style="display:none">
+          <h3 style="font-family:var(--font-cond);font-size:16px;font-weight:800;color:var(--navy);margin-bottom:16px">3ª Contagem (Definitiva) — <span id="inv3SKULabel"></span></h3>
+          <div class="form-grid-2">
+            <div class="form-group"><label>Quantidade *</label><input type="number" id="inv3Qtd" class="form-input large-input" placeholder="0" step="0.001" inputmode="decimal"></div>
+            <div class="form-group" style="justify-content:flex-end;flex-direction:row;align-items:flex-end;gap:10px">
+              <button class="btn-secondary" onclick="cancelInv3()">Cancelar</button>
+              <button class="btn-primary" onclick="saveInvContagem(3)">Confirmar 3ª Contagem</button>
+            </div>
+          </div>
+        </div>
+        <div class="filters-bar"><input id="filterInv3" class="search-input" placeholder="Buscar por SKU, descrição, armazém, endereço ou status" oninput="renderInv3Table()"></div>
+        <div class="table-card"><div class="table-wrapper"><table class="data-table"><thead><tr><th>SKU</th><th>Descrição</th><th>Armazém</th><th>Endereço</th><th>Sistema</th><th>Valor Unit.</th><th>1ª</th><th>2ª</th><th>3ª Definitiva</th><th>Dif. R$</th><th>Resultado</th><th>Ação</th></tr></thead><tbody id="tbodyInv3"></tbody></table></div></div>
+      </div>
+
+      <div class="tab-content" id="tab-resultado">
+        <div class="page-header" style="padding:0 0 16px">
+          <h3 style="font-family:var(--font-cond);font-size:18px;font-weight:800;color:var(--navy)">Resultado Final do Inventário Geral</h3>
+          <div class="header-actions">
+            <select class="filter-select" id="filterResArm"><option value="">Todos os Armazéns</option><option>01</option><option>02</option><option>03</option><option>10</option><option>98</option></select>
+            <button class="btn-primary" onclick="exportResultado()">
+              <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+              Exportar CSV
+            </button>
+          </div>
+        </div>
+        <div class="table-card"><div class="table-wrapper"><table class="data-table"><thead><tr><th>Código</th><th>Descrição</th><th>Sistema</th><th>Contagem Definitiva</th><th>Valor Unit.</th><th>Dif. Unit.</th><th>Dif. R$</th><th>Armazém</th><th>Data</th><th>Doc</th><th>Lote</th><th>Endereço</th></tr></thead><tbody id="tbodyResultado"></tbody></table></div></div>
+      </div>
+    </div>
+    <!-- /inv geral -->
+
+  </div><!-- /pages-container -->
+</main>
+</div><!-- /screen-app -->
+
+<!-- TOAST -->
+<datalist id="skuDatalist"></datalist>
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- MODAL OVERLAY -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box" id="modalBox"></div>
+</div>
+
+<!-- BARCODE MODAL -->
+<div class="modal-overlay" id="barcodeOverlay">
+  <div class="scanner-modal">
+    <div class="scanner-header">
+      <h3>📷 Leitor de Código de Barras</h3>
+      <button onclick="closeBarcodeModal()">×</button>
+    </div>
+    <div style="position:relative">
+      <div id="interactive"></div>
+      <div class="scanner-line" id="scannerLine"></div>
+    </div>
+    <div class="scanner-result" id="scannerResult"></div>
+    <p class="scanner-hint">Aponte a câmera para o código de barras</p>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+
+// ===== AUTENTICAÇÃO =====
+const APP = { user: null };
+
+window.addEventListener('load', () => {
+  const saved = sessionStorage.getItem('sdb_user');
+  if (saved) {
+    APP.user = JSON.parse(saved);
+    showApp();
+  } else {
+    document.getElementById('screen-login').classList.remove('hidden');
+    document.getElementById('screen-app').classList.add('hidden');
+  }
+});
+
+async function handleLogin(e) {
+  e.preventDefault();
+  const email = document.getElementById('loginEmail').value.trim();
+  const senha = document.getElementById('loginPwd').value;
+  const btn = document.getElementById('loginBtn');
+  const alert = document.getElementById('loginAlert');
+
+  btn.disabled = true;
+  btn.textContent = 'Verificando...';
+  alert.style.display = 'none';
+
+  try {
+    const res = await apiCall('login', { email, senha });
+    APP.user = res.user;
+    sessionStorage.setItem('sdb_user', JSON.stringify(res.user));
+    showApp();
+  } catch (err) {
+    alert.textContent = err.message || 'E-mail ou senha incorretos.';
+    alert.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Entrar';
+  }
+}
+
+function showApp() {
+  document.getElementById('screen-login').classList.add('hidden');
+  document.getElementById('screen-app').classList.remove('hidden');
+  const u = APP.user || {nome:'Admin', perfil:'Administrador'};
+  const initials = String(u.nome || 'AD').split(' ').slice(0,2).map(n=>n[0]).join('').toUpperCase();
+  const avatar = document.getElementById('userAvatar');
+  const name = document.getElementById('userName');
+  const role = document.getElementById('userRole');
+  if (avatar) avatar.textContent = initials || 'AD';
+  if (name) name.textContent = u.nome || 'Admin';
+  if (role) role.textContent = String(u.perfil || 'Administrador').toUpperCase();
+  STATE.currentUser = { name: u.nome || 'Admin', role: String(u.perfil || 'Administrador').toUpperCase(), initials: initials || 'AD', email: u.email || '' };
+  applyAdminVisibility();
+  loadInitialData();
+}
+
+function handleLogout() {
+  sessionStorage.removeItem('sdb_user');
+  APP.user = null;
+  document.getElementById('screen-app').classList.add('hidden');
+  document.getElementById('screen-login').classList.remove('hidden');
+  document.getElementById('loginPwd').value = '';
+}
+
+/* =============================================
+   SDB INVENTORY — app.js COMPLETO
+   ============================================= */
+
+// ===== CONFIG FIREBASE =====
+// Frontend hospedado no Firebase + backend no Apps Script Web App.
+const API_URL = 'https://script.google.com/macros/s/AKfycbzl0GQgEku-BVXlJ2io-w9ImqypnZVLl1mUWF2_w9L-0sMxj1Pu1tZXDQZytvDrWAIL/exec';
+const USE_MOCK = false; // false = dados reais no Apps Script / Google Sheets
+
+// ===== STATE =====
+const STATE = {
+  contagens: [],
+  skus: [],
+  saldoSistema: [],
+  ajustes: [],
+  enderecamento: [],
+  invGeral: { saldo:[], contagens:[] },
+  importHistory: [],
+  currentUser: { name:'Admin', role:'ADMINISTRADOR', initials:'AD' },
+  usuarios: [],
+  charts: {}
+};
+
+// ===== MOCK DATA =====
+const MOCK = {
+  contagens: [
+    {id:'ROT-1',dataHora:'04/05/2026 08:10',sku:'1001186',descricao:'SACO SAL ZEBU 25 KG',armazem:'02',qtdFisica:4248,qtdSistema:3571.5,difUnit:676.5,difFin:365.17,valorUnit:0.54,ciclo:42,usuario:'Admin',status:'SUPERAVIT'},
+    {id:'ROT-2',dataHora:'25/04/2026 09:22',sku:'1001669',descricao:'BIG BAG 90X90X120 160G SDB',armazem:'02',qtdFisica:1081,qtdSistema:610,difUnit:471,difFin:9793.5,valorUnit:20.79,ciclo:83,usuario:'Admin',status:'SUPERAVIT'},
+    {id:'ROT-3',dataHora:'04/05/2026 10:05',sku:'1002641',descricao:'SACO SAL SDB INDUSTRIAL 50KG',armazem:'02',qtdFisica:3095,qtdSistema:2762,difUnit:333,difFin:262.8,valorUnit:0.79,ciclo:46,usuario:'Operador1',status:'SUPERAVIT'},
+    {id:'ROT-4',dataHora:'04/05/2026 11:30',sku:'1001579',descricao:'PALLET 1,20 X 1,00 (PBR)',armazem:'02',qtdFisica:80,qtdSistema:178.91,difUnit:-96.91,difFin:-3521.86,valorUnit:35.61,ciclo:47,usuario:'Admin',status:'DEFICIT'},
+    {id:'ROT-5',dataHora:'04/05/2026 12:15',sku:'1006799',descricao:'BIG BAG 190G 90X90X120 COM',armazem:'02',qtdFisica:66,qtdSistema:204.76,difUnit:-138.76,difFin:-3513.86,valorUnit:25.32,ciclo:63,usuario:'Operador1',status:'DEFICIT'},
+    {id:'ROT-6',dataHora:'04/05/2026 13:00',sku:'1007003',descricao:'BIG BAG 90X90X120 160G LISO',armazem:'02',qtdFisica:269,qtdSistema:422.5,difUnit:-153.5,difFin:-3324.03,valorUnit:21.65,ciclo:32,usuario:'Admin',status:'DEFICIT'},
+    {id:'ROT-7',dataHora:'04/05/2026 14:22',sku:'1001201',descricao:'IODATO DE POTASSIO',armazem:'02',qtdFisica:3.74,qtdSistema:3.74,difUnit:0,difFin:0,valorUnit:89,ciclo:9,usuario:'Admin',status:'BATENDO'},
+    {id:'ROT-8',dataHora:'04/05/2026 15:10',sku:'1002631',descricao:'SACO SAL INDUS DIAMANTE B 25KG',armazem:'02',qtdFisica:16250,qtdSistema:16644,difUnit:-394,difFin:-220.64,valorUnit:0.56,ciclo:41,usuario:'Operador2',status:'DEFICIT'},
+    {id:'ROT-9',dataHora:'04/05/2026 17:05',sku:'1002633',descricao:'SACO SAL PREMIUM 25KG',armazem:'02',qtdFisica:2247,qtdSistema:2834.8,difUnit:-587.8,difFin:-405.58,valorUnit:0.69,ciclo:63,usuario:'Admin',status:'DEFICIT'},
+    {id:'ROT-10',dataHora:'04/05/2026 09:00',sku:'1001698',descricao:'FILME STRETCH 500MMX30MICRAS',armazem:'02',qtdFisica:81,qtdSistema:18.45,difUnit:62.55,difFin:546.74,valorUnit:8.74,ciclo:54,usuario:'Operador2',status:'SUPERAVIT'},
+  ],
+  skus:[
+    {sku:'1001186',descricao:'SACO SAL ZEBU 25 KG',unidade:'UN',armazem:'02',ativo:true},
+    {sku:'1001669',descricao:'BIG BAG 90X90X120 160G SDB',unidade:'UN',armazem:'02',ativo:true},
+    {sku:'1002641',descricao:'SACO SAL SDB INDUSTRIAL 50KG',unidade:'UN',armazem:'02',ativo:true},
+    {sku:'1001698',descricao:'FILME STRETCH 500MMX30MICRAS',unidade:'RL',armazem:'02',ativo:true},
+    {sku:'1002683',descricao:'FOLHA DE PAPELAO ONDULADA',unidade:'UN',armazem:'03',ativo:true},
+    {sku:'1001200',descricao:'FERROCIANETO DE SODIO GRAU ALIMENTICIO',unidade:'KG',armazem:'02',ativo:true},
+    {sku:'1001465',descricao:'LACRE BAGSEAL 44CM COR AZUL',unidade:'UN',armazem:'10',ativo:true},
+    {sku:'1001201',descricao:'IODATO DE POTASSIO',unidade:'KG',armazem:'02',ativo:true},
+    {sku:'1002631',descricao:'SACO SAL INDUS DIAMANTE B 25KG',unidade:'UN',armazem:'02',ativo:true},
+    {sku:'1002633',descricao:'SACO SAL PREMIUM 25KG',unidade:'UN',armazem:'02',ativo:true},
+    {sku:'1006799',descricao:'BIG BAG 190G 90X90X120 COM',unidade:'UN',armazem:'02',ativo:true},
+    {sku:'1007003',descricao:'BIG BAG 90X90X120 160G LISO',unidade:'UN',armazem:'02',ativo:true},
+    {sku:'1001579',descricao:'PALLET 1,20 X 1,00 (PBR)',unidade:'UN',armazem:'02',ativo:true},
+  ],
+  ajustes:[
+    {id:'ADJ-1',dataHora:'07/05/2026 09:15',sku:'1002633',descricao:'SACO SAL PREMIUM 25KG',armazem:'02',tipoAjuste:'AJUSTE NEGATIVO',observacao:'Divergência identificada na contagem física. Aprovado pelo supervisor.',usuario:'Admin'},
+    {id:'ADJ-2',dataHora:'05/05/2026 14:22',sku:'1006799',descricao:'BIG BAG 190G 90X90X120 COM',armazem:'02',tipoAjuste:'AJUSTE NEGATIVO',observacao:'Produto danificado descartado',usuario:'Operador1'},
+    {id:'ADJ-3',dataHora:'03/05/2026 10:00',sku:'1001669',descricao:'BIG BAG 90X90X120 160G SDB',armazem:'02',tipoAjuste:'AJUSTE POSITIVO',observacao:'Recebimento não lançado no sistema ERP',usuario:'Admin'},
+    {id:'ADJ-4',dataHora:'28/04/2026 16:30',sku:'1001579',descricao:'PALLET 1,20 X 1,00 (PBR)',armazem:'02',tipoAjuste:'AJUSTE NEGATIVO',observacao:'Pallets quebrados descartados em manutenção',usuario:'Operador2'},
+  ],
+  enderecamento:[
+    {codigo:'1001186',descricao:'SACO SAL ZEBU 25 KG',armazem:'02',endereco:'A-01-01',data:'01/05/2026'},
+    {codigo:'1001669',descricao:'BIG BAG 90X90X120 160G SDB',armazem:'02',endereco:'B-02-03',data:'02/05/2026'},
+    {codigo:'1002641',descricao:'SACO SAL SDB INDUSTRIAL 50KG',armazem:'02',endereco:'A-03-02',data:'03/05/2026'},
+    {codigo:'1001698',descricao:'FILME STRETCH 500MMX30MICRAS',armazem:'02',endereco:'C-01-05',data:'04/05/2026'},
+    {codigo:'1001200',descricao:'FERROCIANETO DE SODIO GRAU ALIMENTICIO',armazem:'02',endereco:'D-02-01',data:'01/05/2026'},
+  ],
+  importHistory:[
+    {dataHora:'07/05/2026 08:32',arquivo:'saldo_sistema_07052026.xlsx',registros:2015,usuario:'Admin',status:'sucesso'},
+    {dataHora:'06/05/2026 07:58',arquivo:'saldo_sistema_06052026.xlsx',registros:2010,usuario:'Admin',status:'sucesso'},
+  ]
+};
+
+// ===== INIT =====
+window.addEventListener('load', () => {
+  if (USE_MOCK) {
+    STATE.contagens = [...MOCK.contagens];
+    STATE.skus = [...MOCK.skus];
+    STATE.ajustes = [...MOCK.ajustes];
+    STATE.enderecamento = [...MOCK.enderecamento];
+    STATE.importHistory = [...MOCK.importHistory];
+  }
+  document.getElementById('currentDate').textContent = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  document.getElementById('dateTo').value = new Date().toISOString().slice(0,10);
+  initDateGuards();
+  setInterval(updateClock, 1000); updateClock();
+  initNav();
+  loadDashboard();
+  renderImportHistory();
+  renderUltimoCiclo();
+  renderTabelaGeral();
+  renderInvGeral();
+});
+
+async function loadInitialData(){
+  try{
+    if(!USE_MOCK){
+      const [skus, ajustes, end, cont, hist, invSaldo, invCont, saldoSistema] = await Promise.all([
+        apiCall('getSKUs'),
+        apiCall('getAjustes'),
+        apiCall('getEnderecamento'),
+        apiCall('getContagens'),
+        apiCall('getImportHistory'),
+        apiCall('getInvGeralSaldo'),
+        apiCall('getInvContagens'),
+        apiCall('getSaldoSistema')
+      ]);
+      STATE.skus = skus.data || [];
+      STATE.ajustes = ajustes.data || [];
+      STATE.enderecamento = end.data || [];
+      STATE.contagens = cont.data || [];
+      STATE.importHistory = hist.data || [];
+      INV_STATE.saldo = invSaldo.data || [];
+      INV_STATE.contagens = invCont.data || [];
+      STATE.saldoSistema = saldoSistema.data || [];
+      renderSkuDatalist();
+    }
+  }catch(e){ console.warn(e); }
+  loadDashboard();
+  renderImportHistory();
+  renderUltimoCiclo();
+  renderTabelaGeral();
+}
+
+function updateClock(){
+  const dh = document.getElementById('inputDataHora');
+  if(dh) dh.value = new Date().toLocaleString('pt-BR');
+}
+
+// ===== NAV =====
+function initNav(){
+  document.querySelectorAll('.nav-item[data-page]').forEach(item => {
+    item.addEventListener('click', e => { e.preventDefault(); navigateTo(item.dataset.page); });
+  });
+}
+const PAGE_TITLES = {dashboard:'Dashboard',contagem:'Nova Contagem',ultimociclo:'Último Ciclo Contado',tabelageral:'Tabela Geral',importar:'Importar Saldo',sku:'Cadastro de SKU',ajustes:'Histórico de Ajustes',enderecamento:'Endereçamento',usuarios:'Cadastro de Usuários',invgeral:'Inventário Geral'};
+function navigateTo(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const pg = document.getElementById('page-'+id);
+  if(pg) pg.classList.add('active');
+  const nav = document.querySelector(`.nav-item[data-page="${id}"]`);
+  if(nav) nav.classList.add('active');
+  document.getElementById('pageTitle').textContent = PAGE_TITLES[id]||'SDB';
+  closeMobileMenu();
+  if(id==='ajustes') renderTimeline();
+  if(id==='ultimociclo') renderUltimoCiclo();
+  if(id==='tabelageral') renderTabelaGeral();
+  if(id==='sku') renderSKU();
+  if(id==='enderecamento') renderEnderecamento();
+  if(id==='usuarios') loadUsuarios();
+  if(id==='invgeral') renderInvGeral();
+}
+
+// ===== SIDEBAR =====
+function closeMobileMenu(){
+  document.getElementById('sidebar')?.classList.remove('mobile-open');
+  document.getElementById('mobileSidebarBackdrop')?.classList.remove('show');
+}
+function toggleMobileMenu(){
+  const s=document.getElementById('sidebar');
+  const b=document.getElementById('mobileSidebarBackdrop');
+  if(!s)return;
+  const open=!s.classList.contains('mobile-open');
+  s.classList.toggle('mobile-open',open);
+  if(b)b.classList.toggle('show',open);
+}
+document.getElementById('sidebarToggle')?.addEventListener('click',()=>{
+  if(window.innerWidth<=768) closeMobileMenu();
+  else document.getElementById('sidebar').classList.toggle('collapsed');
+});
+document.getElementById('menuBtn')?.addEventListener('click',()=>{
+  if(window.innerWidth<=768) toggleMobileMenu();
+  else document.getElementById('sidebar').classList.toggle('collapsed');
+});
+document.getElementById('mobileSidebarBackdrop')?.addEventListener('click',closeMobileMenu);
+window.addEventListener('resize',()=>{if(window.innerWidth>768) closeMobileMenu();});
+
+// ===== API =====
+async function apiCall(action, data = {}) {
+  if (USE_MOCK) return mockAPI(action, data);
+
+  showLoading('Aguarde...');
+
+  // Firebase/Hosting externo: usa fetch para chamar o Apps Script publicado como Web App.
+  if (API_URL) {
+    try {
+      const resp = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          // text/plain evita preflight CORS em Web App do Apps Script.
+          'Content-Type': 'text/plain;charset=utf-8'
+        },
+        body: JSON.stringify({ action, data })
+      });
+
+      const json = await resp.json();
+      hideLoading();
+
+      if (!json || json.success === false) {
+        const msg = json?.error || 'Erro desconhecido';
+        showToast(msg, 'error');
+        throw new Error(msg);
+      }
+
+      return json;
+    } catch (err) {
+      hideLoading();
+      const msg = err?.message || String(err) || 'Erro ao comunicar com o Apps Script';
+      showToast(msg, 'error');
+      throw err;
+    }
+  }
+
+  // Compatibilidade: caso volte a hospedar direto no Apps Script.
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    return new Promise((resolve, reject) => {
+      google.script.run
+        .withSuccessHandler(json => {
+          hideLoading();
+          if (!json || json.success === false) {
+            const msg = json?.error || 'Erro desconhecido';
+            showToast(msg, 'error');
+            reject(new Error(msg));
+            return;
+          }
+          resolve(json);
+        })
+        .withFailureHandler(err => {
+          hideLoading();
+          const msg = err?.message || String(err) || 'Erro ao comunicar com o Apps Script';
+          showToast(msg, 'error');
+          reject(new Error(msg));
+        })
+        .api(action, data);
+    });
+  }
+
+  hideLoading();
+  throw new Error('API_URL não configurada. Informe a URL /exec do Apps Script.');
+}
+
+function mockAPI(action, data={}){
+  switch(action){
+    case 'getDashboard': return {success:true, kpis:{pctContada:'97.82',acuraciaFinanceira:'99.61',acuraciaUnidade:'99.85',difFinanceira:'13542.26',contado:1971,total:2015},graficos:{difUnitPorMes:{labels:['out 2025','nov 2025','dez 2025','jan 2026','fev 2026','mar 2026','abr 2026'],data:[1,-258,76,0,-51,674,525]},skuPorMes:{labels:['fevereiro','março','abril','setembro','outubro'],data:[70,1322,401,47,134]}}};
+    case 'getUltimoCiclo': return {success:true,data:STATE.contagens};
+    case 'getContagens': return {success:true,data:STATE.contagens};
+    case 'saveContagem': STATE.contagens.unshift(data); return {success:true};
+    case 'getSKUs': return {success:true,data:STATE.skus};
+    case 'saveSKU': {const i=STATE.skus.findIndex(s=>s.sku===data.sku); i>=0?STATE.skus[i]=data:STATE.skus.push(data); return {success:true};}
+    case 'deleteSKU': {const i=STATE.skus.findIndex(s=>s.sku===data.sku); if(i>=0)STATE.skus[i].ativo=false; return {success:true};}
+    case 'getAjustes': return {success:true,data:STATE.ajustes};
+    case 'saveAjuste': STATE.ajustes.unshift(data); return {success:true};
+    case 'getEnderecamento': return {success:true,data:STATE.enderecamento};
+    case 'getUsuarios': return {success:true,data:STATE.usuarios};
+    case 'saveUsuario': {const i=STATE.usuarios.findIndex(u=>u.id===data.id); i>=0?STATE.usuarios[i]=data:STATE.usuarios.push({...data,id:genId('USR')}); return {success:true};}
+    case 'deleteUsuario': {const i=STATE.usuarios.findIndex(u=>u.id===data.id); if(i>=0)STATE.usuarios[i].status='INATIVO'; return {success:true};}
+    case 'getImportHistory': return {success:true,data:STATE.importHistory};
+    case 'clearImportHistory': STATE.importHistory=[]; return {success:true};
+    case 'clearAjustes': STATE.ajustes=[]; return {success:true};
+    case 'importSaldo': STATE.importHistory.unshift({dataHora:new Date().toLocaleString('pt-BR'),arquivo:data.filename||'arquivo.xlsx',registros:data.rows?.length||0,usuario:'Admin',status:'sucesso'}); return {success:true,imported:data.rows?.length||0};
+    default: return {success:true,data:[]};
+  }
+}
+
+// ===== LOADING =====
+function showLoading(txt='Carregando...'){const o=document.getElementById('loadingOverlay');document.getElementById('loadingText').textContent=txt;o.classList.add('show')}
+function hideLoading(){document.getElementById('loadingOverlay').classList.remove('show')}
+
+// ===== TOAST =====
+function showToast(msg, type='success'){
+  const c=document.getElementById('toastContainer');
+  if(!c){ console.log(type, msg); return; }
+  const t=document.createElement('div');
+  t.className='toast '+type;
+  const ico=type==='error'?'✕':type==='warning'?'⚠':type==='info'?'ℹ':'✓';
+  t.innerHTML=`<span style="font-size:16px">${ico}</span><span>${msg}</span>`;
+  c.appendChild(t);
+  setTimeout(()=>{ if(t && t.parentNode) t.remove(); },3600);
+}
+
+function updateNotifBadge(){
+  const b=document.getElementById('notifBadge');
+  if(!b)return;
+  const pend=(window.INV_STATE?.contagens||[]).filter(c=>c.resultado==='SEGUNDA_CONTAGEM'||c.resultado==='TERCEIRA_CONTAGEM').length;
+  b.textContent=String(pend);
+  b.style.display=pend?'flex':'none';
+}
+
+// ===== FORMATTERS =====
+function fmt(v,d=2){return Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d})}
+function fmtR(v){return 'R$ '+fmt(v)}
+function fmtPct(v){return fmt(v)+'%'}
+function parseDateBR(v){
+  if(!v) return null;
+  if(v instanceof Date) return v;
+  const str=String(v);
+  const m=str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:[, ]+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+  if(m) return new Date(Number(m[3]),Number(m[2])-1,Number(m[1]),Number(m[4]||0),Number(m[5]||0),Number(m[6]||0));
+  const d=new Date(str);
+  return isNaN(d.getTime())?null:d;
+}
+function inDateRangeBR(value, ini, fim){
+  const d=parseDateBR(value);
+  if(!d) return !(ini||fim);
+  if(ini){const a=new Date(ini+'T00:00:00'); if(d<a) return false;}
+  if(fim){const b=new Date(fim+'T23:59:59'); if(d>b) return false;}
+  return true;
+}
+function validateDatePair(startId,endId){
+  const a=document.getElementById(startId), b=document.getElementById(endId);
+  if(!a||!b) return true;
+  if(a.value) b.min=a.value; else b.removeAttribute('min');
+  if(b.value) a.max=b.value; else a.removeAttribute('max');
+  if(a.value && b.value && a.value>b.value){
+    showToast('A data inicial não pode ser maior que a data final.','warning');
+    b.value=a.value;
+    b.min=a.value;
+    return false;
+  }
+  return true;
+}
+function initDateGuards(){
+  [['dateFrom','dateTo'],['filterGeralDataIni','filterGeralDataFim']].forEach(([a,b])=>{
+    document.getElementById(a)?.addEventListener('change',()=>validateDatePair(a,b));
+    document.getElementById(b)?.addEventListener('change',()=>validateDatePair(a,b));
+    validateDatePair(a,b);
+  });
+}
+function genId(p='ID'){return p+'-'+Date.now()+'-'+Math.floor(Math.random()*9999)}
+function isAdmin(){return String(APP.user?.perfil || STATE.currentUser?.role || '').toUpperCase()==='ADMINISTRADOR'}
+function applyAdminVisibility(){document.querySelectorAll('.admin-only').forEach(el=>el.style.display=isAdmin()?'':'none')}
+
+// ===== DASHBOARD =====
+let chartDifUnit=null,chartGaugeFin=null,chartGaugeUnit=null,chartSKU=null;
+Chart.defaults.font.family="'Barlow',sans-serif";
+Chart.defaults.color='rgba(255,255,255,.6)';
+
+async function loadDashboard(){
+  validateDatePair('dateFrom','dateTo');
+  const res = await apiCall('getDashboard', {
+    dateFrom: document.getElementById('dateFrom')?.value || '',
+    dateTo: document.getElementById('dateTo')?.value || '',
+    armazem: document.getElementById('fArmazem')?.value || '',
+    ciclo: document.getElementById('fCiclo')?.value || 'ultimo'
+  });
+  if(!res.success) return;
+  const k = res.kpis || {}, g = res.graficos || {};
+  const cobertura = Number(k.pctContada || 0);
+  const acuUnit = Number(k.acuraciaUnidade || 0);
+  const acuFin = Number(k.acuraciaFinanceira || 0);
+  const difFin = Number(k.difFinanceira || 0);
+  const total = Number(k.total || 0);
+  const contado = Number(k.contado || 0);
+
+  document.getElementById('kpiContada').textContent = fmtPct(cobertura);
+  document.getElementById('barContada').style.width = Math.min(100,cobertura)+'%';
+  document.getElementById('kpiAcuUnit').textContent = fmtPct(acuUnit);
+  document.getElementById('barAcuUnit').style.width = Math.min(100,acuUnit)+'%';
+  document.getElementById('kpiAcuFin').textContent = fmtPct(acuFin);
+  document.getElementById('barAcuFin').style.width = Math.min(100,acuFin)+'%';
+  document.getElementById('kpiDifFin').textContent = fmtR(difFin);
+  document.getElementById('kpiContTotal').textContent = contado+' / '+total+' itens';
+  if(document.getElementById('kpiFinal1')) document.getElementById('kpiFinal1').textContent = k.final1 ?? 0;
+  if(document.getElementById('kpiFinal2')) document.getElementById('kpiFinal2').textContent = k.final2 ?? 0;
+  if(document.getElementById('kpiFinal3')) document.getElementById('kpiFinal3').textContent = k.final3 ?? 0;
+  const barTotal = document.getElementById('barContTotal');
+  if(barTotal) barTotal.style.width = total ? Math.min(100,(contado/total*100))+'%' : '0%';
+
+  const sinal = difFin > 0 ? 'superávit' : difFin < 0 ? 'déficit' : 'sem divergência financeira';
+  document.getElementById('insightMain').textContent = `Inventário com ${fmtPct(cobertura)} de cobertura e ${fmtR(difFin)} de ${sinal}.`;
+  document.getElementById('insightPriority').textContent = acuFin < 99.85 ? 'Priorize os itens com maior divergência financeira antes de fechar o ciclo.' : 'Acurácia financeira dentro ou próxima da meta.';
+  document.getElementById('insightRisk').textContent = cobertura < 80 ? 'Cobertura ainda baixa: resultado parcial pode distorcer a análise.' : 'Cobertura suficiente para análise operacional.';
+
+  const badge = document.getElementById('notifBadge');
+  if(badge) badge.textContent = (STATE.ajustes||[]).length;
+
+  buildChartDifUnit(g.difUnitPorMes || {labels:[],data:[]});
+  buildGauge('chartGaugeFinanceiro','gaugeFinVal',acuFin);
+  buildGauge('chartGaugeUnidade','gaugeUnitVal',acuUnit);
+  buildChartSKU(g.skuPorMes || {labels:[],data:[]});
+}
+
+function buildChartDifUnit(data){
+  if(chartDifUnit) chartDifUnit.destroy();
+  const ctx=document.getElementById('chartDifUnit');
+  if(!ctx) return;
+  chartDifUnit=new Chart(ctx,{type:'line',data:{labels:data.labels,datasets:[{label:'Dif. Unitária',data:data.data,borderColor:'#8bc34a',backgroundColor:'rgba(139,195,74,.1)',pointBackgroundColor:'#8bc34a',pointRadius:5,pointHoverRadius:8,borderWidth:2.5,fill:false,tension:.25}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(26,46,90,.95)',titleColor:'#8bc34a',bodyColor:'#fff',borderColor:'#8bc34a',borderWidth:1,padding:12,cornerRadius:8}},scales:{x:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'rgba(255,255,255,.55)',font:{size:11}}},y:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'rgba(255,255,255,.55)',font:{size:11}}}}}});
+}
+function buildGauge(canvasId, valId, value){
+  const existing = STATE.charts[canvasId];
+  if(existing) existing.destroy();
+  const ctx=document.getElementById(canvasId);
+  if(!ctx) return;
+  const color = value>=99.85?'#38c172':value>=95?'#d69e2e':'#e53e3e';
+  const filled = Math.max(0, value-90);
+  STATE.charts[canvasId]=new Chart(ctx,{type:'doughnut',data:{datasets:[{data:[filled,10-filled,0.01],backgroundColor:[color,'rgba(255,255,255,.08)','transparent'],borderWidth:0,circumference:180,rotation:270}]},options:{responsive:true,maintainAspectRatio:true,cutout:'72%',plugins:{legend:{display:false},tooltip:{enabled:false}}}});
+  document.getElementById(valId).textContent=fmtPct(value);
+}
+function buildChartSKU(data){
+  if(chartSKU) chartSKU.destroy();
+  const ctx=document.getElementById('chartSKU');
+  if(!ctx) return;
+  chartSKU=new Chart(ctx,{type:'bar',data:{labels:data.labels,datasets:[{label:'SKUs',data:data.data,backgroundColor:'#8bc34a',hoverBackgroundColor:'#a4d65e',borderRadius:6,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(26,46,90,.95)',titleColor:'#8bc34a',bodyColor:'#fff',borderColor:'#8bc34a',borderWidth:1,padding:12,cornerRadius:8}},scales:{x:{grid:{display:false},ticks:{color:'rgba(255,255,255,.55)',font:{size:11}}},y:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'rgba(255,255,255,.55)',font:{size:11}}}}}});
+}
+
+// ===== CONTAGEM FORM =====
+function getSaldoSistemaLocal(sku, armazem){
+  return (STATE.saldoSistema||[]).find(x=>String(x.codigo)===String(sku) && normArm(x.armazem)===normArm(armazem));
+}
+function getSkuInfoLocal(sku, armazem=''){
+  const cad=(STATE.skus||[]).find(s=>String(s.sku)===String(sku) && s.ativo!==false);
+  const saldo=(STATE.saldoSistema||[]).find(x=>String(x.codigo)===String(sku) && (!armazem || normArm(x.armazem)===normArm(armazem))) || null;
+  return {sku,descricao: cad?.descricao || saldo?.descricao || '',unidade: cad?.unidade || saldo?.unidade || '',armazem: cad?.armazem || saldo?.armazem || armazem || ''};
+}
+function searchSKU(){
+  const v = document.getElementById('inputSKU').value.trim();
+  if(!v){showToast('Digite ou selecione um SKU','warning');return;}
+  const info = getSkuInfoLocal(v, document.getElementById('inputArmazem').value);
+  if(info.descricao || info.armazem){
+    document.getElementById('inputDescricao').value=info.descricao || 'SKU localizado na base';
+    if(info.armazem) document.getElementById('inputArmazem').value=normArm(info.armazem);
+    const arm=document.getElementById('inputArmazem').value;
+    const ciclos = STATE.contagens.filter(c=>String(c.sku)===String(v)&&normArm(c.armazem)===normArm(arm));
+    const maxCiclo = ciclos.length?Math.max(...ciclos.map(c=>Number(c.ciclo)||0))+1:1;
+    document.getElementById('inputCiclo').value=maxCiclo;
+    document.getElementById('inputQtd').focus();
+    showToast('SKU selecionado: '+(info.descricao || v));
+    updateComparison();
+  } else showToast('SKU não encontrado em SKU_MASTER nem em SALDO_SISTEMA','warning');
+}
+document.getElementById('inputSKU').addEventListener('keydown',e=>{if(e.key==='Enter')searchSKU();});
+document.getElementById('inputQtd').addEventListener('input',updateComparison);
+document.getElementById('inputArmazem').addEventListener('change',updateComparison);
+function updateComparison(){
+  const sku=document.getElementById('inputSKU').value;
+  const qtdF=parseFloat(document.getElementById('inputQtd').value)||0;
+  if(!sku||!qtdF) return;
+  const arm=document.getElementById('inputArmazem').value;
+  const saldo=getSaldoSistemaLocal(sku,arm) || STATE.contagens.find(c=>String(c.sku)===String(sku)&&normArm(c.armazem)===normArm(arm));
+  if(!saldo) return;
+  const qtdSistema=Number(saldo.saldo ?? saldo.qtdSistema ?? 0);
+  const box=document.getElementById('comparisonBox');
+  box.style.display='grid';
+  document.getElementById('compSistema').textContent=fmt(qtdSistema);
+  document.getElementById('compFisica').textContent=fmt(qtdF);
+  const dif=qtdF-qtdSistema;
+  const difEl=document.getElementById('compDif');
+  difEl.textContent=fmt(dif);
+  difEl.className='comp-value '+(dif>0?'positive':dif<0?'negative':'');
+  let st,sc;
+  if(dif===0){st='BATENDO';sc='batendo';}else if(dif<0){st='DÉFICIT';sc='deficit';}else{st='SUPERÁVIT';sc='superavit';}
+  const sel=document.getElementById('compStatus');
+  sel.textContent=st; sel.className='status-badge '+sc;
+}
+async function saveContagem(){
+  const sku=document.getElementById('inputSKU').value.trim();
+  const qtd=parseFloat(document.getElementById('inputQtd').value);
+  const arm=document.getElementById('inputArmazem').value;
+  if(!sku||isNaN(qtd)||!arm){showToast('Preencha SKU, Armazém e Quantidade','error');return;}
+  const info=getSkuInfoLocal(sku,arm);
+  const saldo=getSaldoSistemaLocal(sku,arm) || STATE.contagens.find(c=>String(c.sku)===String(sku)&&normArm(c.armazem)===normArm(arm));
+  const qtdSis=Number(saldo?.saldo ?? saldo?.qtdSistema ?? 0);
+  const valUnit=Number(saldo?.valorUnitario ?? saldo?.valorUnit ?? 0);
+  const dif=qtd-qtdSis;
+  const ciclo=parseInt(document.getElementById('inputCiclo').value)||1;
+  const status=dif===0?'BATENDO':dif<0?'DEFICIT':'SUPERAVIT';
+  const res=await apiCall('saveContagem',{sku,armazem:arm,qtdFisica:qtd,usuario:STATE.currentUser.name});
+  const nova={id:res.id||genId('ROT'),dataHora:new Date().toLocaleString('pt-BR'),sku,descricao:res.descricao||info.descricao||'',armazem:arm,qtdFisica:qtd,qtdSistema:res.qtdSistema??qtdSis,difUnit:res.difUnit??dif,difFin:res.difFin??(dif*valUnit),valorUnit:res.valorUnit??valUnit,ciclo:res.ciclo??ciclo,usuario:STATE.currentUser.name,status:res.status||status};
+  STATE.contagens.unshift(nova);
+  renderContagensHoje();
+  renderUltimoCiclo(); renderTabelaGeral();
+  showToast('Contagem salva! Status: '+status+' | Ciclo: '+ciclo);
+  clearContagemForm();
+}
+function clearContagemForm(){
+  ['inputSKU','inputDescricao','inputQtd','inputCiclo'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('inputArmazem').value='';
+  document.getElementById('comparisonBox').style.display='none';
+}
+function renderContagensHoje(){
+  const hoje=new Date().toLocaleDateString('pt-BR');
+  const data=STATE.contagens.filter(c=>c.dataHora&&c.dataHora.startsWith(hoje.slice(0,2)));
+  const tbody=document.getElementById('tbodyContagensHoje');
+  tbody.innerHTML=data.length?data.slice(0,20).map(r=>`
+    <tr>
+      <td>${r.dataHora.split(' ')[1]||'—'}</td>
+      <td><strong>${r.sku}</strong></td>
+      <td>${r.descricao}</td>
+      <td>${r.armazem}</td>
+      <td>${fmt(r.qtdFisica)}</td>
+      <td>${fmt(r.qtdSistema)}</td>
+      <td class="${r.difUnit>0?'positive':r.difUnit<0?'negative':''}">${fmt(r.difUnit)}</td>
+      <td>${r.ciclo}</td>
+      <td><span class="status-badge ${(r.status||'').toLowerCase()}">${r.status}</span></td>
+    </tr>`).join(''):`<tr><td colspan="9" class="empty-row">Nenhuma contagem hoje</td></tr>`;
+}
+
+// ===== ÚLTIMO CICLO =====
+let ucPage=1; const UC_PAGE_SIZE=15;
+function renderUltimoCiclo(){
+  const search=(document.getElementById('searchUC')||{}).value||'';
+  const sit=(document.getElementById('filterUCSit')||{}).value||'';
+  const arm=(document.getElementById('filterUCArm')||{}).value||'';
+
+  // Último ciclo por SKU+Armazem
+  const map={};
+  STATE.contagens.forEach(r=>{const k=`${r.sku}_${r.armazem}`;if(!map[k]||Number(r.ciclo)>Number(map[k].ciclo))map[k]=r;});
+  let data=Object.values(map);
+  if(sit) data=data.filter(r=>r.status===sit);
+  if(arm) data=data.filter(r=>String(r.armazem)===String(arm));
+  if(search){const s=search.toLowerCase();data=data.filter(r=>[r.dataHora,r.sku,r.armazem,r.descricao,r.qtdSistema,r.qtdFisica,r.difUnit,r.difFin,r.ciclo,r.usuario,r.status].join(' ').toLowerCase().includes(s));}
+
+  const total=data.length;
+  const paged=data.slice((ucPage-1)*UC_PAGE_SIZE,ucPage*UC_PAGE_SIZE);
+
+  const tbody=document.getElementById('tbodyUC');
+  tbody.innerHTML=paged.map(r=>`
+    <tr>
+      <td>${r.dataHora}</td>
+      <td><strong>${r.sku}</strong></td>
+      <td>${r.armazem}</td>
+      <td>${r.descricao}</td>
+      <td>${fmt(r.qtdSistema)}</td>
+      <td>${fmt(r.qtdFisica)}</td>
+      <td class="${r.difUnit>0?'positive':r.difUnit<0?'negative':''}">${fmt(r.difUnit)}</td>
+      <td>${r.ciclo}</td>
+      <td>—</td>
+      <td>${fmt(r.valorUnit)}</td>
+      <td class="${r.difFin>0?'positive':r.difFin<0?'negative':''}">${fmtR(r.difFin)}</td>
+      <td><span class="status-badge ${(r.status||'').toLowerCase()}">${r.status}</span></td>
+    </tr>`).join('');
+
+  // Totais
+  const tots=data.reduce((a,r)=>({s:a.s+Number(r.qtdSistema),f:a.f+Number(r.qtdFisica),d:a.d+Number(r.difUnit),u:a.u+Number(r.valorUnit),ff:a.ff+Number(r.difFin)}),{s:0,f:0,d:0,u:0,ff:0});
+  document.getElementById('totSis').textContent=fmt(tots.s);
+  document.getElementById('totFis').textContent=fmt(tots.f);
+  const totDifEl=document.getElementById('totDif');totDifEl.textContent=fmt(tots.d);totDifEl.className=tots.d<0?'negative':tots.d>0?'positive':'';
+  document.getElementById('totUnit').textContent=fmt(tots.u);
+  const totFFEl=document.getElementById('totDifFin');totFFEl.textContent=fmtR(tots.ff);totFFEl.className=tots.ff<0?'negative':tots.ff>0?'positive':'';
+  document.getElementById('infoUC').textContent=total+' registros';
+  buildPagination('paginUC',total,UC_PAGE_SIZE,ucPage,p=>{ucPage=p;renderUltimoCiclo();});
+}
+document.getElementById('searchUC')?.addEventListener('input',()=>{ucPage=1;renderUltimoCiclo();});
+document.getElementById('filterUCSit')?.addEventListener('change',()=>{ucPage=1;renderUltimoCiclo();});
+document.getElementById('filterUCArm')?.addEventListener('change',()=>{ucPage=1;renderUltimoCiclo();});
+
+// ===== TABELA GERAL =====
+let geralPage=1; const GERAL_PAGE_SIZE=20;
+function renderTabelaGeral(){
+  const search=(document.getElementById('searchGeral')||{}).value||'';
+  const sit=(document.getElementById('filterGeralSit')||{}).value||'';
+  const arm=(document.getElementById('filterGeralArm')||{}).value||'';
+  const ciclo=(document.getElementById('filterGeralCiclo')||{}).value||'';
+  const periodo=(document.getElementById('filterGeralData')||{}).value||'';
+  const dtIni=(document.getElementById('filterGeralDataIni')||{}).value||'';
+  const dtFim=(document.getElementById('filterGeralDataFim')||{}).value||'';
+  let data=[...STATE.contagens];
+  if(sit)data=data.filter(r=>r.status===sit);
+  if(arm)data=data.filter(r=>String(r.armazem)===String(arm));
+  if(ciclo==='ultimo'){
+    const map={};
+    data.forEach(r=>{const k=`${r.sku}_${r.armazem}`; if(!map[k]||Number(r.ciclo)>Number(map[k].ciclo)) map[k]=r;});
+    data=Object.values(map);
+  } else if(ciclo==='anteriores'){
+    const max={};
+    data.forEach(r=>{const k=`${r.sku}_${r.armazem}`; max[k]=Math.max(max[k]||0,Number(r.ciclo)||0);});
+    data=data.filter(r=>Number(r.ciclo)<max[`${r.sku}_${r.armazem}`]);
+  }
+  if(search){const s=search.toLowerCase();data=data.filter(r=>[r.dataHora,r.sku,r.armazem,r.descricao,r.qtdSistema,r.qtdFisica,r.difUnit,r.difFin,r.ciclo,r.usuario,r.status].join(' ').toLowerCase().includes(s));}
+  if(dtIni||dtFim){data=data.filter(r=>inDateRangeBR(r.dataHora,dtIni,dtFim));}
+  else if(periodo){
+    const now=new Date();
+    let a=new Date(now.getFullYear(),now.getMonth(),now.getDate()), b=new Date(now.getFullYear(),now.getMonth(),now.getDate(),23,59,59);
+    if(periodo==='semana'){const day=(now.getDay()+6)%7; a=new Date(now.getFullYear(),now.getMonth(),now.getDate()-day); b=new Date(a); b.setDate(a.getDate()+6); b.setHours(23,59,59,999);}
+    if(periodo==='mes'){a=new Date(now.getFullYear(),now.getMonth(),1); b=new Date(now.getFullYear(),now.getMonth()+1,0,23,59,59,999);}
+    data=data.filter(r=>{const d=parseDateBR(r.dataHora); return !!d && d>=a&&d<=b;});
+  }
+  data.sort((a,b)=>(parseDateBR(b.dataHora)||0)-(parseDateBR(a.dataHora)||0));
+  const total=data.length;
+  const paged=data.slice((geralPage-1)*GERAL_PAGE_SIZE,geralPage*GERAL_PAGE_SIZE);
+  const tbody=document.getElementById('tbodyGeral');
+  tbody.innerHTML=paged.length?paged.map(r=>`
+    <tr>
+      <td>${r.dataHora}</td><td><strong>${r.sku}</strong></td><td>${r.armazem}</td><td>${r.descricao}</td>
+      <td>${fmt(r.qtdSistema)}</td><td>${fmt(r.qtdFisica)}</td>
+      <td class="${r.difUnit>0?'positive':r.difUnit<0?'negative':''}">${fmt(r.difUnit)}</td>
+      <td class="${r.difFin>0?'positive':r.difFin<0?'negative':''}">${fmtR(r.difFin)}</td>
+      <td>${r.ciclo}</td><td>${r.usuario}</td>
+      <td><span class="status-badge ${(r.status||'').toLowerCase()}">${r.status}</span></td>
+    </tr>`).join(''):'<tr><td colspan="11" class="empty-row">Nenhum registro encontrado</td></tr>';
+  document.getElementById('infoGeral').textContent=total+' registros';
+  buildPagination('paginGeral',total,GERAL_PAGE_SIZE,geralPage,p=>{geralPage=p;renderTabelaGeral();});
+}
+['searchGeral' ,'filterGeralSit','filterGeralArm','filterGeralCiclo','filterGeralData','filterGeralDataIni','filterGeralDataFim'].forEach(id=>{
+  document.getElementById(id)?.addEventListener('change',()=>{geralPage=1;renderTabelaGeral();});
+  document.getElementById(id)?.addEventListener('input',()=>{geralPage=1;renderTabelaGeral();});
+});
+
+// ===== PAGINATION =====
+function buildPagination(containerId,total,pageSize,current,callback){
+  const c=document.getElementById(containerId);
+  if(!c)return;
+  const pages=Math.ceil(total/pageSize);
+  if(pages<=1){c.innerHTML='';return;}
+  let btns=`<button class="page-btn" ${current<=1?'disabled':''} onclick="(${callback})(${current-1})">‹</button>`;
+  for(let i=1;i<=pages;i++){
+    if(i===1||i===pages||Math.abs(i-current)<=1)
+      btns+=`<button class="page-btn ${i===current?'active':''}" onclick="(${callback})(${i})">${i}</button>`;
+    else if(Math.abs(i-current)===2)btns+=`<span style="padding:0 4px;color:var(--gray-400)">…</span>`;
+  }
+  btns+=`<button class="page-btn" ${current>=pages?'disabled':''} onclick="(${callback})(${current+1})">›</button>`;
+  c.innerHTML=btns;
+}
+
+// ===== SORT TABLE =====
+const sortState={};
+function sortTable(tableId,colIndex){
+  const table=document.getElementById(tableId);
+  if(!table)return;
+  const tbody=table.querySelector('tbody');
+  const rows=[...tbody.querySelectorAll('tr')];
+  const key=tableId+'_'+colIndex;
+  const asc=sortState[key]!==true;
+  sortState[key]=asc;
+  rows.sort((a,b)=>{
+    const av=a.cells[colIndex]?.textContent.trim()||'';
+    const bv=b.cells[colIndex]?.textContent.trim()||'';
+    const an=parseFloat(av.replace(/[^0-9,-]/g,'').replace(',','.'));
+    const bn=parseFloat(bv.replace(/[^0-9,-]/g,'').replace(',','.'));
+    if(!isNaN(an)&&!isNaN(bn))return asc?an-bn:bn-an;
+    return asc?av.localeCompare(bv):bv.localeCompare(av);
+  });
+  rows.forEach(r=>tbody.appendChild(r));
+}
+
+// ===== SKU =====
+let skuPage=1; const SKU_PAGE_SIZE=15;
+function renderSKU(){
+  const search=(document.getElementById('searchSKU')||{}).value||'';
+  const arm=(document.getElementById('filterSKUArm')||{}).value||'';
+  let data=STATE.skus.filter(s=>s.ativo!==false);
+  if(arm)data=data.filter(s=>String(s.armazem)===String(arm));
+  if(search){const ss=search.toLowerCase();data=data.filter(s=>String(s.sku).includes(ss)||s.descricao.toLowerCase().includes(ss));}
+  const total=data.length;
+  const paged=data.slice((skuPage-1)*SKU_PAGE_SIZE,skuPage*SKU_PAGE_SIZE);
+  const tbody=document.getElementById('tbodySKU');
+  tbody.innerHTML=paged.map(s=>`
+    <tr>
+      <td><strong>${s.sku}</strong></td>
+      <td>${s.descricao}</td>
+      <td><span style="background:var(--gray-100);padding:2px 8px;border-radius:4px;font-size:12px;font-weight:600">${s.unidade}</span></td>
+      <td>${s.armazem}</td>
+      <td>
+        <button class="btn-secondary" style="padding:4px 10px;font-size:12px" onclick="openSKUModal('${s.sku}')">✏️ Editar</button>
+        <button class="btn-danger" style="margin-left:4px" onclick="deleteSKU('${s.sku}')">🗑 Excluir</button>
+      </td>
+    </tr>`).join('');
+  document.getElementById('infoSKU').textContent=total+' registros';
+  buildPagination('paginSKU',total,SKU_PAGE_SIZE,skuPage,p=>{skuPage=p;renderSKU();});
+}
+function openSKUModal(editSku=null){
+  const existing=editSku?STATE.skus.find(s=>s.sku===editSku):null;
+  const box=document.getElementById('modalBox');
+  box.innerHTML=`
+    <div class="modal-header"><h3>${editSku?'Editar':'Novo'} SKU</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+    <div class="form-grid-2">
+      <div class="form-group"><label>SKU *</label><input class="form-input" id="mSKU" value="${existing?.sku||''}" ${editSku?'readonly':''}></div>
+      <div class="form-group"><label>Unidade *</label><input class="form-input" id="mUnidade" value="${existing?.unidade||'UN'}" placeholder="UN, KG, RL..."></div>
+      <div class="form-group span-2"><label>Descrição *</label><input class="form-input" id="mDesc" value="${existing?.descricao||''}" placeholder="Descrição do produto"></div>
+      <div class="form-group"><label>Armazém Padrão</label><select class="form-input" id="mArmazem"><option value="01" ${existing?.armazem==='01'?'selected':''}>01</option><option value="02" ${existing?.armazem==='02'||!existing?'selected':''}>02</option><option value="03" ${existing?.armazem==='03'?'selected':''}>03</option><option value="10" ${existing?.armazem==='10'?'selected':''}>10</option><option value="98" ${existing?.armazem==='98'?'selected':''}>98</option></select></div>
+    </div>
+    <div class="form-actions"><button class="btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn-primary" onclick="saveSKU('${editSku||''}')">💾 Salvar</button></div>`;
+  document.getElementById('modalOverlay').classList.add('show');
+}
+async function saveSKU(editSku){
+  const sku=document.getElementById('mSKU').value.trim();
+  const desc=document.getElementById('mDesc').value.trim();
+  const unidade=document.getElementById('mUnidade').value.trim();
+  const armazem=document.getElementById('mArmazem').value;
+  if(!sku||!desc){showToast('SKU e Descrição são obrigatórios','error');return;}
+  const data={sku,descricao:desc,unidade,armazem,ativo:true};
+  await apiCall('saveSKU',data);
+  const i=STATE.skus.findIndex(s=>String(s.sku)===String(sku));
+  if(i>=0)STATE.skus[i]=data; else STATE.skus.push(data);
+  closeModal();renderSKU();
+  showToast(editSku?'SKU atualizado!':'SKU cadastrado com sucesso!');
+}
+async function deleteSKU(sku){
+  if(!confirm(`Confirma exclusão do SKU ${sku}?`))return;
+  await apiCall('deleteSKU',{sku});
+  const i=STATE.skus.findIndex(s=>s.sku===sku);
+  if(i>=0)STATE.skus[i].ativo=false;
+  renderSKU();showToast('SKU excluído');
+}
+
+// ===== AJUSTES =====
+function renderTimeline(){
+  const search=(document.getElementById('searchAjuste')||{}).value||'';
+  const tipo=(document.getElementById('filterAjusteTipo')||{}).value||'';
+  let data=[...STATE.ajustes];
+  if(tipo)data=data.filter(a=>a.tipoAjuste===tipo);
+  if(search){const s=search.toLowerCase();data=data.filter(a=>String(a.sku).includes(s)||a.descricao.toLowerCase().includes(s));}
+  const c=document.getElementById('ajustesTimeline');
+  c.innerHTML=data.length?data.map(a=>`
+    <div class="timeline-item">
+      <div class="timeline-date">${a.dataHora} · <strong>${a.usuario}</strong></div>
+      <div class="timeline-title">${a.sku} — ${a.descricao}</div>
+      <div style="display:flex;align-items:center;gap:8px;margin:6px 0">
+        <span class="status-badge ${a.tipoAjuste.includes('POSITIVO')?'superavit':'deficit'}">${a.tipoAjuste}</span>
+        <span style="font-size:11px;color:var(--gray-400)">Armazém ${a.armazem}</span>
+      </div>
+      <div class="timeline-desc">${a.observacao}</div>
+    </div>`).join(''):'<p style="text-align:center;color:var(--gray-400);padding:32px">Nenhum ajuste registrado</p>';
+}
+function openAjusteModal(){
+  const box=document.getElementById('modalBox');
+  box.innerHTML=`
+    <div class="modal-header"><h3>Registrar Ajuste</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+    <div class="form-grid-2">
+      <div class="form-group"><label>SKU *</label><input class="form-input" id="ajSKU" placeholder="Ex: 1001186"></div>
+      <div class="form-group"><label>Armazém</label><select class="form-input" id="ajArm"><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="10">10</option><option value="98">98</option></select></div>
+      <div class="form-group"><label>Tipo</label><select class="form-input" id="ajTipo"><option value="AJUSTE POSITIVO">AJUSTE POSITIVO</option><option value="AJUSTE NEGATIVO">AJUSTE NEGATIVO</option></select></div>
+      <div class="form-group"><label>Usuário</label><input class="form-input" id="ajUser" value="${STATE.currentUser.name}"></div>
+      <div class="form-group span-2"><label>Observação *</label><textarea class="form-input" id="ajObs" rows="3" placeholder="Descreva o motivo do ajuste"></textarea></div>
+    </div>
+    <div class="form-actions"><button class="btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn-primary" onclick="saveAjuste()">💾 Salvar Ajuste</button></div>`;
+  document.getElementById('modalOverlay').classList.add('show');
+}
+async function saveAjuste(){
+  const sku=document.getElementById('ajSKU').value.trim();
+  const obs=document.getElementById('ajObs').value.trim();
+  if(!sku||!obs){showToast('SKU e Observação são obrigatórios','error');return;}
+  const skuData=STATE.skus.find(s=>s.sku===sku);
+  const data={id:genId('ADJ'),dataHora:new Date().toLocaleString('pt-BR'),sku,descricao:skuData?.descricao||'—',armazem:document.getElementById('ajArm').value,tipoAjuste:document.getElementById('ajTipo').value,observacao:obs,usuario:document.getElementById('ajUser').value||STATE.currentUser.name};
+  await apiCall('saveAjuste',data);
+  STATE.ajustes.unshift(data);
+  closeModal();renderTimeline();showToast('Ajuste registrado com sucesso!');
+}
+
+// ===== USUÁRIOS =====
+async function loadUsuarios(){
+  const res = await apiCall('getUsuarios');
+  STATE.usuarios = res.data || [];
+  renderUsuarios();
+}
+function renderUsuarios(){
+  const search=(document.getElementById('searchUser')||{}).value||'';
+  let data=[...(STATE.usuarios||[])];
+  if(search){const s=search.toLowerCase();data=data.filter(u=>String(u.nome).toLowerCase().includes(s)||String(u.email).toLowerCase().includes(s));}
+  const tbody=document.getElementById('tbodyUsuarios');
+  if(!tbody)return;
+  tbody.innerHTML=data.length?data.map(u=>`
+    <tr>
+      <td><strong>${u.nome}</strong></td>
+      <td>${u.email}</td>
+      <td>${u.perfil}</td>
+      <td><span class="status-badge ${String(u.status).toUpperCase()==='ATIVO'?'batendo':'deficit'}">${u.status}</span></td>
+      <td>${u.ultimoLogin||'—'}</td>
+      <td>
+        <button class="btn-secondary" style="padding:4px 10px;font-size:12px" onclick="openUserModal('${u.id}')">✏️ Editar</button>
+        <button class="btn-secondary" style="padding:4px 10px;font-size:12px" onclick="openResetSenha('${u.id}')">🔑 Senha</button>
+        <button class="btn-danger" style="margin-left:4px" onclick="deleteUsuario('${u.id}')">🚫 Inativar</button>
+      </td>
+    </tr>`).join(''):'<tr><td colspan="6" class="empty-row">Nenhum usuário cadastrado</td></tr>';
+}
+function openUserModal(id=''){
+  const u=id?STATE.usuarios.find(x=>String(x.id)===String(id)):null;
+  const box=document.getElementById('modalBox');
+  box.innerHTML=`
+    <div class="modal-header"><h3>${id?'Editar':'Novo'} Usuário</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+    <div class="form-grid-2">
+      <div class="form-group"><label>Nome *</label><input class="form-input" id="uNome" value="${u?.nome||''}"></div>
+      <div class="form-group"><label>E-mail *</label><input class="form-input" id="uEmail" value="${u?.email||''}" type="email"></div>
+      <div class="form-group"><label>Perfil *</label><select class="form-input" id="uPerfil"><option ${u?.perfil==='Administrador'?'selected':''}>Administrador</option><option ${u?.perfil==='Supervisor'?'selected':''}>Supervisor</option><option ${u?.perfil==='Operador'?'selected':''}>Operador</option></select></div>
+      <div class="form-group"><label>Status</label><select class="form-input" id="uStatus"><option value="ATIVO" ${u?.status!=='INATIVO'?'selected':''}>ATIVO</option><option value="INATIVO" ${u?.status==='INATIVO'?'selected':''}>INATIVO</option></select></div>
+      <div class="form-group span-2"><label>Senha ${id?'<span style="color:var(--gray-400);font-weight:500">(preencha só se quiser alterar)</span>':'*'}</label><input class="form-input" id="uSenha" type="password" placeholder="Mínimo 6 caracteres"></div>
+      <div class="form-group span-2"><label style="display:flex;gap:8px;align-items:center;text-transform:none"><input type="checkbox" id="uEnviarEmail" checked> Enviar senha automaticamente para o e-mail do usuário</label></div>
+    </div>
+    <div class="form-actions"><button class="btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn-primary" onclick="saveUsuario('${id}')">💾 Salvar</button></div>`;
+  document.getElementById('modalOverlay').classList.add('show');
+}
+async function saveUsuario(id=''){
+  const data={id,nome:document.getElementById('uNome').value.trim(),email:document.getElementById('uEmail').value.trim(),senha:document.getElementById('uSenha').value,perfil:document.getElementById('uPerfil').value,status:document.getElementById('uStatus').value,enviarEmail:document.getElementById('uEnviarEmail')?.checked!==false};
+  if(!data.nome||!data.email||!data.perfil){showToast('Nome, e-mail e perfil são obrigatórios','error');return;}
+  if(!id && !data.senha){showToast('Senha é obrigatória para novo usuário','error');return;}
+  const res = await apiCall('saveUsuario',data);
+  closeModal();await loadUsuarios();showToast('Usuário salvo com sucesso' + (res.emailSent ? ' e senha enviada por e-mail.' : '.'));
+}
+function openResetSenha(id){
+  const box=document.getElementById('modalBox');
+  box.innerHTML=`<div class="modal-header"><h3>Redefinir Senha</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+  <div class="form-group"><label>Nova senha *</label><input class="form-input" id="newPwd" type="password" placeholder="Mínimo 6 caracteres"></div>
+  <div class="form-actions"><button class="btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn-primary" onclick="resetSenhaUsuario('${id}')">Salvar Senha</button></div>`;
+  document.getElementById('modalOverlay').classList.add('show');
+}
+async function resetSenhaUsuario(id){
+  const senha=document.getElementById('newPwd').value;
+  const res = await apiCall('resetSenhaUsuario',{id,senha,enviarEmail:true});
+  closeModal();showToast('Senha redefinida' + (res.emailSent ? ' e enviada por e-mail.' : '.'));
+}
+async function deleteUsuario(id){
+  if(!confirm('Confirma inativar este usuário?'))return;
+  await apiCall('deleteUsuario',{id});
+  await loadUsuarios();showToast('Usuário inativado.');
+}
+
+// ===== ENDEREÇAMENTO =====
+function renderEnderecamento(){
+  const search=(document.getElementById('searchEnd')||{}).value||'';
+  const arm=(document.getElementById('filterEndArm')||{}).value||'';
+  let data=[...STATE.enderecamento];
+  if(arm)data=data.filter(e=>String(e.armazem)===String(arm));
+  if(search){const s=search.toLowerCase();data=data.filter(e=>String(e.codigo).includes(s)||String(e.endereco||'').toLowerCase().includes(s));}
+  const tbody=document.getElementById('tbodyEnd');
+  tbody.innerHTML=data.map(e=>{
+    const sku=STATE.skus.find(s=>s.sku===e.codigo);
+    return `<tr>
+      <td><strong>${e.codigo}</strong></td>
+      <td>${sku?.descricao||'—'}</td>
+      <td>${e.armazem}</td>
+      <td><span style="font-family:monospace;font-weight:600;color:var(--navy-light);background:var(--gray-100);padding:3px 8px;border-radius:4px">${e.endereco||'—'}</span></td>
+      <td>${e.data}</td>
+      <td><button class="btn-secondary" style="padding:4px 10px;font-size:12px" onclick="openEndModal('${e.codigo}')">✏️ Editar</button></td>
+    </tr>`;}).join('');
+}
+function openEndModal(codigo=null){
+  const existing=codigo?STATE.enderecamento.find(e=>e.codigo===codigo):null;
+  const box=document.getElementById('modalBox');
+  box.innerHTML=`
+    <div class="modal-header"><h3>${codigo?'Editar':'Novo'} Endereço</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+    <div class="form-grid-2">
+      <div class="form-group"><label>Código *</label><input class="form-input" id="eCodigo" value="${existing?.codigo||''}" ${codigo?'readonly':''}></div>
+      <div class="form-group"><label>Armazém</label><select class="form-input" id="eArmazem"><option value="01">01</option><option value="02" ${existing?.armazem==='02'||!existing?'selected':''}>02</option><option value="03">03</option><option value="10">10</option><option value="98">98</option></select></div>
+      <div class="form-group"><label>Endereço <span style="color:var(--gray-400);font-weight:500">(opcional)</span></label><input class="form-input" id="eEnd" value="${existing?.endereco||''}" placeholder="Ex: A-01-01"></div>
+      <div class="form-group"><label>Data</label><input type="date" class="form-input" id="eData" value="${new Date().toISOString().slice(0,10)}"></div>
+    </div>
+    <div class="form-actions"><button class="btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn-primary" onclick="saveEnd('${codigo||''}')">💾 Salvar</button></div>`;
+  document.getElementById('modalOverlay').classList.add('show');
+}
+async function saveEnd(codigo){
+  const cod=document.getElementById('eCodigo').value.trim();
+  const end=document.getElementById('eEnd').value.trim();
+  if(!cod){showToast('Código é obrigatório','error');return;}
+  const data={codigo:cod,armazem:document.getElementById('eArmazem').value,endereco:end,data:document.getElementById('eData').value};
+  await apiCall('saveEnderecamento',[{CODIGO:cod,ARMAZEM:data.armazem,DATA:data.data,ENDERECO:data.endereco}]);
+  const i=STATE.enderecamento.findIndex(e=>e.codigo===cod && String(e.armazem)===String(data.armazem));
+  if(i>=0)STATE.enderecamento[i]=data; else STATE.enderecamento.push(data);
+  closeModal();renderEnderecamento();showToast('Endereço salvo!');
+}
+
+// ===== UPLOAD / IMPORTAÇÃO =====
+function handleDrop(e,type){
+  e.preventDefault();e.currentTarget.classList.remove('dragover');
+  const file=e.dataTransfer.files[0];
+  if(file)processFile(file,type);
+}
+const pendingImport={};
+function processFile(file,type){
+  if(!file)return;
+  if(!file.name.match(/\.(xlsx|xls|csv)$/i)){showToast('Formato inválido. Use .xlsx, .xls ou .csv','error');return;}
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'binary'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const data=XLSX.utils.sheet_to_json(ws,{header:1});
+      pendingImport[type]={file,data};
+      showPreview(type,data,file.name);
+    }catch(err){showToast('Erro ao ler arquivo: '+err.message,'error');}
+  };
+  reader.readAsBinaryString(file);
+}
+function showPreview(type,data,filename){
+  if(!data||data.length<2){showToast('Arquivo vazio ou sem dados','warning');return;}
+  const areaMap={saldo:'uploadArea',invgeral:'uploadArea'};
+  const previewMap={saldo:'uploadPreviewSaldo',invgeral:'uploadPreviewInvGeral',sku:'uploadPreviewSKU',end:'uploadPreviewEnd'};
+  const hdrMap={saldo:'previewHdrSaldo',invgeral:'previewHdrInvGeral',sku:'previewHdrSKU',end:'previewHdrEnd'};
+  const bodyMap={saldo:'previewBodySaldo',invgeral:'previewBodyInvGeral',sku:'previewBodySKU',end:'previewBodyEnd'};
+  const infoMap={saldo:'previewInfoSaldo',invgeral:'previewInfoInvGeral',sku:'previewInfoSKU',end:'previewInfoEnd'};
+
+  const areaEl=document.getElementById(areaMap[type]||'uploadArea');
+  const prevEl=document.getElementById(previewMap[type]||'uploadPreviewSaldo');
+  if(areaEl)areaEl.style.display='none';
+  if(prevEl)prevEl.style.display='block';
+
+  const headers=data[0];
+  const hdrEl=document.getElementById(hdrMap[type]);
+  const bodyEl=document.getElementById(bodyMap[type]);
+  const infoEl=document.getElementById(infoMap[type]);
+  if(hdrEl)hdrEl.innerHTML=headers.map(h=>`<th>${h}</th>`).join('');
+  if(bodyEl)bodyEl.innerHTML=data.slice(1,6).map(r=>`<tr>${headers.map((_,i)=>`<td>${r[i]!==undefined?r[i]:''}</td>`).join('')}</tr>`).join('');
+  if(infoEl)infoEl.textContent=`${filename} · ${data.length-1} registros`;
+}
+function cancelUpload(type){
+  const previewMap={saldo:'uploadPreviewSaldo',invgeral:'uploadPreviewInvGeral',sku:'uploadPreviewSKU',end:'uploadPreviewEnd'};
+  const areaEl=document.querySelectorAll(`#page-importar .upload-area, #tab-importacao .upload-area`);
+  areaEl.forEach(el=>el.style.display='');
+  const prev=document.getElementById(previewMap[type]);
+  if(prev)prev.style.display='none';
+  delete pendingImport[type];
+}
+async function confirmImport(type){
+  const pending=pendingImport[type];
+  if(!pending){showToast('Nenhum arquivo selecionado','warning');return;}
+  const {file,data}=pending;
+  const headers=data[0].map(h=>String(h).trim().toUpperCase());
+  const rows=data.slice(1).filter(r=>r.some(v=>v!==''&&v!==null&&v!==undefined)).map(r=>{const obj={};headers.forEach((h,i)=>obj[h]=r[i]);return obj;});
+
+  const required = {
+    saldo:['CODIGO','ARMAZEM','SALDO_ATUAL','VALOR_UNITARIO','DESCRICAO','UNIDADE','DATA_RELATORIO'],
+    sku:['SKU','DESCRICAO','UNIDADE','ARMAZEM_PADRAO'],
+    end:['CODIGO','ARMAZEM'],
+    invgeral:['CODIGO','SALDO_ATUAL','ARMAZEM','VALOR_UNITARIO','DATA']
+  }[type] || [];
+  const missing = required.filter(c=>!headers.includes(c));
+  if(missing.length){showToast('Colunas ausentes: '+missing.join(', '),'error');return;}
+
+  if(type==='saldo'){
+    await apiCall('importSaldo',{filename:file.name,rows});
+    STATE.importHistory.unshift({dataHora:new Date().toLocaleString('pt-BR'),arquivo:file.name,registros:rows.length,usuario:STATE.currentUser.name,status:'sucesso'});
+    renderImportHistory();
+  } else if(type==='sku'){
+    for(const r of rows){
+      await apiCall('saveSKU',{sku:r.SKU,descricao:r.DESCRICAO,unidade:r.UNIDADE,armazem:r.ARMAZEM_PADRAO,ativo:true});
+    }
+    const skus = await apiCall('getSKUs');
+    STATE.skus = skus.data || STATE.skus;
+    renderSkuDatalist();
+    renderSKU();
+  } else if(type==='end'){
+    const payload = rows.map(r=>({CODIGO:r.CODIGO,ARMAZEM:r.ARMAZEM,DATA:r.DATA,ENDERECO:r.ENDERECO || ''}));
+    await apiCall('saveEnderecamento',payload);
+    const end = await apiCall('getEnderecamento');
+    STATE.enderecamento = end.data || STATE.enderecamento;
+    renderEnderecamento();
+  } else if(type==='invgeral'){
+    await apiCall('importInvGeralSaldo',rows);
+    INV_STATE.saldo = rows.map(r=>({codigo:r.CODIGO,saldo:Number(r.SALDO_ATUAL)||0,armazem:r.ARMAZEM,valorUnitario:Number(r.VALOR_UNITARIO)||0,data:r.DATA,doc:r.DOC,lote:r.LOTE,endereco:r.ENDERECO}));
+    renderInvGeral();
+  }
+  cancelUpload(type);
+  showToast(`✅ ${rows.length} registros importados com sucesso!`);
+  delete pendingImport[type];
+}
+function renderImportHistory(){
+  const tbody=document.getElementById('tbodyImpHist');
+  if(!tbody)return;
+  tbody.innerHTML=STATE.importHistory.length?STATE.importHistory.map(h=>`
+    <tr>
+      <td>${h.dataHora}</td>
+      <td>${h.arquivo}</td>
+      <td><strong>${h.registros.toLocaleString('pt-BR')}</strong></td>
+      <td>${h.usuario}</td>
+      <td><span class="status-badge ${h.status}">${h.status==='sucesso'?'✓ Sucesso':'✕ Erro'}</span></td>
+    </tr>`).join(''):'<tr><td colspan="5" class="empty-row">Nenhuma importação registrada</td></tr>';
+}
+
+async function clearImportHistory(){
+  if(!confirm('Confirma limpar todo o histórico de importações?'))return;
+  await apiCall('clearImportHistory',{user:APP.user});
+  STATE.importHistory=[];
+  renderImportHistory();
+  showToast('Histórico de importações limpo.');
+}
+
+async function clearAjustes(){
+  if(!confirm('Confirma limpar todo o histórico de ajustes?'))return;
+  await apiCall('clearAjustes',{user:APP.user});
+  STATE.ajustes=[];
+  renderTimeline();
+  document.getElementById('notifBadge').textContent='0';
+  showToast('Histórico de ajustes limpo.');
+}
+
+
+function renderSkuDatalist(){
+  const dl=document.getElementById('skuDatalist');
+  if(!dl)return;
+  const map=new Map();
+  (STATE.skus||[]).filter(s=>s.ativo!==false).forEach(s=>map.set(String(s.sku),{sku:s.sku,descricao:s.descricao||'',armazem:s.armazem||''}));
+  (STATE.saldoSistema||[]).forEach(s=>{ if(!map.has(String(s.codigo))) map.set(String(s.codigo),{sku:s.codigo,descricao:s.descricao||'',armazem:s.armazem||''}); });
+  (INV_STATE.saldo||[]).forEach(s=>{ if(!map.has(String(s.codigo))) map.set(String(s.codigo),{sku:s.codigo,descricao:getSkuDesc(s.codigo),armazem:s.armazem||''}); });
+  dl.innerHTML=[...map.values()].map(s=>`<option value="${s.sku}">${s.descricao||''} — Arm. ${s.armazem||''}</option>`).join('');
+}
+document.addEventListener('change',e=>{
+  if(e.target?.id==='inputSKU')searchSKU();
+  if(e.target?.id==='inv1SKU')searchInvSKU();
+});
+
+// ===== INVENTÁRIO GERAL =====
+const INV_STATE={saldo:[],contagens:[]};
+function normArm(v){return String(v??'').trim().padStart(2,'0')}
+function normSku(v){return String(v??'').trim()}
+function invKey(sku, armazem){return `${normSku(sku)}_${normArm(armazem)}`}
+function getSaldoInv(sku, armazem){return INV_STATE.saldo.find(s=>normSku(s.codigo)===normSku(sku)&&normArm(s.armazem)===normArm(armazem));}
+function getEnderecoInv(sku, armazem){
+  const saldo=getSaldoInv(sku,armazem);
+  if(saldo?.endereco) return saldo.endereco;
+  const end=(STATE.enderecamento||[]).find(e=>normSku(e.codigo)===normSku(sku)&&normArm(e.armazem)===normArm(armazem));
+  return end?.endereco || '';
+}
+function getSkuDesc(sku){
+  return STATE.skus.find(x=>String(x.sku)===String(sku))?.descricao
+    || (STATE.saldoSistema||[]).find(x=>String(x.codigo)===String(sku))?.descricao
+    || '—';
+}
+function renderInvGeral(){
+  updateInvStatusCards();
+  renderInv1Table();renderInv2Table();renderInv3Table();renderResultadoTable();
+  updateInvBadges();
+}
+function updateInvStatusCards(){
+  const total=INV_STATE.saldo.length;
+  const finalized=INV_STATE.contagens.filter(c=>String(c.resultado||'').startsWith('FINAL'));
+  const finalizedKeys=new Set(finalized.map(c=>invKey(c.sku,c.armazem)));
+  const ok=finalizedKeys.size;
+  const latestByKey={};
+  INV_STATE.contagens.forEach(c=>{const k=invKey(c.sku,c.armazem); if(!latestByKey[k] || Number(c.contagem)>Number(latestByKey[k].contagem)) latestByKey[k]=c;});
+  const divKeys=new Set();
+  Object.values(latestByKey).forEach(c=>{ if(Math.abs(Number(c.difUnit||0))>0.0001 || Math.abs(Number(c.difFin||0))>0.0001) divKeys.add(invKey(c.sku,c.armazem)); });
+  const div=divKeys.size;
+  const pend=Math.max(0,total-ok);
+  document.getElementById('invTotTotal').textContent=total||'—';
+  document.getElementById('invTotOk').textContent=ok||'—';
+  document.getElementById('invTotDiv').textContent=div||'—';
+  document.getElementById('invTotPend').textContent=pend>0?pend:'—';
+  const valorDiv=Object.values(latestByKey).reduce((a,c)=>a+Number(c.difFin||0),0);
+  const el=document.getElementById('invValorDivergencia');
+  if(el){el.textContent=fmtR(valorDiv);el.className='inv-status-num '+(valorDiv>0?'positive':valorDiv<0?'negative':'');}
+  const f1=finalized.filter(c=>Number(c.contagem)===1).length;
+  const f2=finalized.filter(c=>Number(c.contagem)===2).length;
+  const f3=finalized.filter(c=>Number(c.contagem)===3).length;
+  const e1=document.getElementById('invFinal1'), e2=document.getElementById('invFinal2'), e3=document.getElementById('invFinal3');
+  if(e1)e1.textContent=f1||'—'; if(e2)e2.textContent=f2||'—'; if(e3)e3.textContent=f3||'—';
+  updateNotifBadge();
+}
+function updateInvBadges(){
+  const countedKeys=new Set(INV_STATE.contagens.map(c=>invKey(c.sku,c.armazem)));
+  const badge1=INV_STATE.saldo.filter(s=>!countedKeys.has(invKey(s.codigo,s.armazem))).length;
+  const badge2=INV_STATE.contagens.filter(c=>c.resultado==='SEGUNDA_CONTAGEM').length;
+  const badge3=INV_STATE.contagens.filter(c=>c.resultado==='TERCEIRA_CONTAGEM').length;
+  document.getElementById('badge1').textContent=badge1||INV_STATE.saldo.length;
+  document.getElementById('badge2').textContent=badge2;
+  document.getElementById('badge3').textContent=badge3;
+}
+function searchInvSKU(){
+  const sku=document.getElementById('inv1SKU').value.trim();
+  const skuData=STATE.skus.find(s=>String(s.sku)===String(sku));
+  if(skuData){document.getElementById('inv1Arm').value=skuData.armazem;showToast('SKU: '+skuData.descricao);}
+}
+let inv2Active=null,inv3Active=null;
+async function saveInvContagem(num){
+  const skuEl=num===1?document.getElementById('inv1SKU'):null;
+  const armEl=num===1?document.getElementById('inv1Arm'):null;
+  const qtdEl=document.getElementById(`inv${num}Qtd`);
+  const sku=num===1?skuEl?.value.trim():(num===2?inv2Active?.sku:inv3Active?.sku);
+  const arm=num===1?armEl?.value:(num===2?inv2Active?.armazem:inv3Active?.armazem);
+  const qtd=parseFloat(qtdEl?.value);
+  if(!sku||isNaN(qtd)||!arm){showToast('Preencha SKU, armazém e quantidade','error');return;}
+  const saldoData=getSaldoInv(sku,arm);
+  if(!saldoData){showToast(`Item não foi importado: SKU ${sku}, armazém ${arm}`,'error');return;}
+  try{
+    const res=await apiCall('saveInvContagem',{sku,armazem:arm,contagem:num,quantidade:qtd,usuario:STATE.currentUser.name});
+    INV_STATE.contagens.push({
+      id:res.id,dataHora:res.dataHora,sku,descricao:getSkuDesc(sku),armazem:arm,
+      contagem:res.contagem,quantidade:res.quantidade,usuario:STATE.currentUser.name,
+      resultado:res.resultado,qtdSistema:res.qtdSistema,valorUnitario:res.valorUnitario,
+      difUnit:res.difUnit,difFin:res.difFin,contagemDefinitiva:res.contagemDefinitiva
+    });
+    if(qtdEl)qtdEl.value='';
+    if(skuEl)skuEl.value='';
+    if(num===2){document.getElementById('inv2Form').style.display='none';inv2Active=null;}
+    if(num===3){document.getElementById('inv3Form').style.display='none';inv3Active=null;}
+    renderInvGeral();showToast(`${num}ª Contagem salva! Resultado: ${res.resultado.replace(/_/g,' ')}`);
+  }catch(e){}
+}
+function openInv2(sku,armazem){inv2Active={sku,armazem};document.getElementById('inv2SKULabel').textContent=`${sku} — Arm. ${armazem} — ${getSkuDesc(sku)}`;document.getElementById('inv2Form').style.display='block';document.getElementById('inv2Qtd').focus();}
+function cancelInv2(){document.getElementById('inv2Form').style.display='none';inv2Active=null;}
+function openInv3(sku,armazem){inv3Active={sku,armazem};document.getElementById('inv3SKULabel').textContent=`${sku} — Arm. ${armazem} — ${getSkuDesc(sku)}`;document.getElementById('inv3Form').style.display='block';document.getElementById('inv3Qtd').focus();}
+function cancelInv3(){document.getElementById('inv3Form').style.display='none';inv3Active=null;}
+
+function renderInv1Table(){
+  const tbody=document.getElementById('tbodyInv1');
+  const q=(document.getElementById('filterInv1')?.value||'').toLowerCase();
+  let data=INV_STATE.saldo;
+  if(q){data=data.filter(s=>{
+    const c1=INV_STATE.contagens.find(c=>normSku(c.sku)===normSku(s.codigo)&&normArm(c.armazem)===normArm(s.armazem)&&Number(c.contagem)===1);
+    const dif=c1?Number(c1.quantidade)-Number(s.saldo):'';
+    const difFin=c1?dif*Number(s.valorUnitario||0):'';
+    const status=c1?c1.resultado:'PENDENTE';
+    return [s.codigo,getSkuDesc(s.codigo),s.armazem,getEnderecoInv(s.codigo,s.armazem),s.saldo,s.valorUnitario,c1?.quantidade,dif,difFin,status].join(' ').toLowerCase().includes(q);
+  });}
+  tbody.innerHTML=data.length?data.map(s=>{
+    const c1=INV_STATE.contagens.find(c=>normSku(c.sku)===normSku(s.codigo)&&normArm(c.armazem)===normArm(s.armazem)&&Number(c.contagem)===1);
+    const dif=c1?Number(c1.quantidade)-Number(s.saldo):null;
+    const difFin=dif!==null?dif*Number(s.valorUnitario||0):null;
+    return `<tr>
+      <td><strong>${s.codigo}</strong></td><td>${getSkuDesc(s.codigo)}</td><td>${s.armazem}</td><td>${getEnderecoInv(s.codigo,s.armazem)||'—'}</td>
+      <td>${fmt(s.saldo)}</td><td>${fmtR(s.valorUnitario||0)}</td>
+      <td>${c1?fmt(c1.quantidade):'<em style="color:var(--gray-400)">Pendente</em>'}</td>
+      <td>${dif!==null?`<span class="${dif>0?'positive':dif<0?'negative':''}">${fmt(dif)}</span>`:'—'}</td>
+      <td>${difFin!==null?`<span class="${difFin>0?'positive':difFin<0?'negative':''}">${fmtR(difFin)}</span>`:'—'}</td>
+      <td>${c1?`<span class="status-badge ${c1.resultado.startsWith('FINAL')?'batendo':'deficit'}">${c1.resultado.replace(/_/g,' ')}</span>`:'<span class="status-badge deficit">PENDENTE</span>'}</td>
+      <td>${!c1?`<button class="btn-primary" style="padding:5px 12px;font-size:12px" onclick="quickInv1('${s.codigo}','${s.armazem}')">Contar</button>`:'—'}</td>
+    </tr>`;}).join(''):'<tr><td colspan="11" class="empty-row">Importe o saldo para iniciar</td></tr>';
+}
+function quickInv1(sku,armazem){
+  document.getElementById('inv1SKU').value=sku;
+  document.getElementById('inv1Arm').value=normArm(armazem);
+  document.getElementById('inv1Qtd').focus();
+  showToast(`Item selecionado: ${sku} / Arm. ${armazem}`,'info');
+}
+function renderInv2Table(){
+  const tbody=document.getElementById('tbodyInv2');
+  const q=(document.getElementById('filterInv2')?.value||'').toLowerCase();
+  const data=INV_STATE.contagens.filter(c=>c.resultado==='SEGUNDA_CONTAGEM');
+  const done=INV_STATE.contagens.filter(c=>Number(c.contagem)===2);
+  let all=[...data,...done.filter(d=>!data.find(x=>invKey(x.sku,x.armazem)===invKey(d.sku,d.armazem)))];
+  if(q){all=all.filter(r=>{const s=getSaldoInv(r.sku,r.armazem)||{};return [r.sku,r.descricao||getSkuDesc(r.sku),r.armazem,getEnderecoInv(r.sku,r.armazem),r.resultado,r.quantidade,s.saldo,s.valorUnitario].join(' ').toLowerCase().includes(q);});}
+  tbody.innerHTML=all.length?all.map(r=>{
+    const s=getSaldoInv(r.sku,r.armazem)||{};
+    const c2=INV_STATE.contagens.find(c=>normSku(c.sku)===normSku(r.sku)&&normArm(c.armazem)===normArm(r.armazem)&&Number(c.contagem)===2);
+    const difFin=c2?(Number(c2.quantidade)-Number(s.saldo||0))*Number(s.valorUnitario||0):null;
+    return `<tr>
+      <td><strong>${r.sku}</strong></td><td>${r.descricao||getSkuDesc(r.sku)}</td><td>${r.armazem}</td><td>${getEnderecoInv(r.sku,r.armazem)||'—'}</td>
+      <td>${fmt(s.saldo||0)}</td><td>${fmtR(s.valorUnitario||0)}</td><td>${fmt(r.quantidade)}</td>
+      <td>${c2?fmt(c2.quantidade):'<em style="color:var(--gray-400)">Aguardando</em>'}</td>
+      <td>${difFin!==null?`<span class="${difFin>0?'positive':difFin<0?'negative':''}">${fmtR(difFin)}</span>`:'—'}</td>
+      <td>${c2?`<span class="status-badge ${c2.resultado.startsWith('FINAL')?'batendo':'deficit'}">${c2.resultado.replace(/_/g,' ')}</span>`:'<span class="status-badge deficit">PENDENTE</span>'}</td>
+      <td>${!c2?`<button class="btn-primary" style="padding:5px 12px;font-size:12px" onclick="openInv2('${r.sku}','${r.armazem}')">Contar</button>`:'—'}</td>
+    </tr>`;}).join(''):'<tr><td colspan="11" class="empty-row">Nenhum item aguardando 2ª contagem</td></tr>';
+}
+function renderInv3Table(){
+  const tbody=document.getElementById('tbodyInv3');
+  const q=(document.getElementById('filterInv3')?.value||'').toLowerCase();
+  const pend=INV_STATE.contagens.filter(c=>c.resultado==='TERCEIRA_CONTAGEM');
+  const done=INV_STATE.contagens.filter(c=>Number(c.contagem)===3);
+  let all=[...pend,...done.filter(d=>!pend.find(x=>invKey(x.sku,x.armazem)===invKey(d.sku,d.armazem)))];
+  if(q){all=all.filter(r=>{const s=getSaldoInv(r.sku,r.armazem)||{};const c1=INV_STATE.contagens.find(c=>normSku(c.sku)===normSku(r.sku)&&normArm(c.armazem)===normArm(r.armazem)&&Number(c.contagem)===1);const c2=INV_STATE.contagens.find(c=>normSku(c.sku)===normSku(r.sku)&&normArm(c.armazem)===normArm(r.armazem)&&Number(c.contagem)===2);const c3=INV_STATE.contagens.find(c=>normSku(c.sku)===normSku(r.sku)&&normArm(c.armazem)===normArm(r.armazem)&&Number(c.contagem)===3);return [r.sku,r.descricao||getSkuDesc(r.sku),r.armazem,getEnderecoInv(r.sku,r.armazem),r.resultado,r.quantidade,s.saldo,s.valorUnitario,c1?.quantidade,c2?.quantidade,c3?.quantidade,c3?.resultado].join(' ').toLowerCase().includes(q);});}
+  tbody.innerHTML=all.length?all.map(r=>{
+    const s=getSaldoInv(r.sku,r.armazem)||{};
+    const c1=INV_STATE.contagens.find(c=>normSku(c.sku)===normSku(r.sku)&&normArm(c.armazem)===normArm(r.armazem)&&Number(c.contagem)===1);
+    const c2=INV_STATE.contagens.find(c=>normSku(c.sku)===normSku(r.sku)&&normArm(c.armazem)===normArm(r.armazem)&&Number(c.contagem)===2);
+    const c3=INV_STATE.contagens.find(c=>normSku(c.sku)===normSku(r.sku)&&normArm(c.armazem)===normArm(r.armazem)&&Number(c.contagem)===3);
+    const difFin=c3?(Number(c3.quantidade)-Number(s.saldo||0))*Number(s.valorUnitario||0):null;
+    return `<tr>
+      <td><strong>${r.sku}</strong></td><td>${r.descricao||getSkuDesc(r.sku)}</td><td>${r.armazem}</td><td>${getEnderecoInv(r.sku,r.armazem)||'—'}</td>
+      <td>${fmt(s.saldo||0)}</td><td>${fmtR(s.valorUnitario||0)}</td><td>${c1?fmt(c1.quantidade):'—'}</td><td>${c2?fmt(c2.quantidade):'—'}</td>
+      <td>${c3?fmt(c3.quantidade):'<em style="color:var(--gray-400)">Aguardando</em>'}</td>
+      <td>${difFin!==null?`<span class="${difFin>0?'positive':difFin<0?'negative':''}">${fmtR(difFin)}</span>`:'—'}</td>
+      <td>${c3?`<span class="status-badge batendo">${String(c3.resultado||'DEFINITIVO').replace(/_/g,' ')}</span>`:'<span class="status-badge deficit">PENDENTE</span>'}</td>
+      <td>${!c3?`<button class="btn-primary" style="padding:5px 12px;font-size:12px" onclick="openInv3('${r.sku}','${r.armazem}')">Contar</button>`:'—'}</td>
+    </tr>`;}).join(''):'<tr><td colspan="12" class="empty-row">Nenhum item aguardando 3ª contagem</td></tr>';
+}
+function buildResultadoLocal(){
+  const hoje=new Date();
+  const doc=`INV${hoje.getDate()}${hoje.getMonth()+1}${hoje.getFullYear()}`;
+  return INV_STATE.saldo.map(s=>{
+    const conts=INV_STATE.contagens.filter(c=>normSku(c.sku)===normSku(s.codigo)&&normArm(c.armazem)===normArm(s.armazem)&&String(c.resultado||'').startsWith('FINAL')).sort((a,b)=>Number(b.contagem)-Number(a.contagem));
+    const ultima=conts[0];
+    const definitiva=ultima?Number(ultima.quantidade):'';
+    const quantidade=ultima?definitiva:Number(s.saldo);
+    const difUnit=quantidade-Number(s.saldo||0);
+    const difFin=difUnit*Number(s.valorUnitario||0);
+    return {codigo:s.codigo,descricao:getSkuDesc(s.codigo),qtdSistema:Number(s.saldo)||0,quantidade,contagemDefinitiva:definitiva,valorUnitario:Number(s.valorUnitario)||0,difUnit,difFin,armazem:s.armazem,data:hoje.toLocaleDateString('pt-BR'),doc:s.doc||doc,lote:s.lote||'',endereco:getEnderecoInv(s.codigo,s.armazem)||''};
+  });
+}
+function renderResultadoTable(){
+  const tbody=document.getElementById('tbodyResultado');
+  const data=buildResultadoLocal();
+  tbody.innerHTML=data.length?data.map(r=>`<tr><td><strong>${r.codigo}</strong></td><td>${r.descricao}</td><td>${fmt(r.qtdSistema)}</td><td>${r.contagemDefinitiva!==''?fmt(r.contagemDefinitiva):'<em style="color:var(--gray-400)">Sem final</em>'}</td><td>${fmtR(r.valorUnitario)}</td><td><span class="${r.difUnit>0?'positive':r.difUnit<0?'negative':''}">${fmt(r.difUnit)}</span></td><td><span class="${r.difFin>0?'positive':r.difFin<0?'negative':''}">${fmtR(r.difFin)}</span></td><td>${r.armazem}</td><td>${r.data}</td><td><span style="font-family:monospace;font-weight:600">${r.doc}</span></td><td>${r.lote||'—'}</td><td>${r.endereco||'—'}</td></tr>`).join(''):'<tr><td colspan="12" class="empty-row">Nenhum resultado — importe o saldo e realize as contagens</td></tr>';
+}
+async function exportResultado(){
+  let data=[];
+  try{
+    const res=await apiCall('getInvResultado',{armazem:document.getElementById('filterResArm')?.value||''});
+    data=(res.data||[]).map(r=>({
+      CODIGO:r.codigo,
+      QUANTIDADE:r.quantidade,
+      CONTAGEM_DEFINITIVA:r.contagemDefinitiva,
+      ARMAZEM:r.armazem,
+      QTD_SISTEMA:r.qtdSistema,
+      VALOR_UNITARIO:r.valorUnitario,
+      DIFERENCA_UNITARIA:r.difUnit,
+      DIFERENCA_FINANCEIRA:r.difFin,
+      RESULTADO:r.resultado,
+      DATA:r.data,
+      DOC:r.doc,
+      LOTE:r.lote||'',
+      ENDERECO:r.endereco||''
+    }));
+  }catch(e){return;}
+  if(!data.length){showToast('Nenhum dado para exportar','warning');return;}
+  const doc=data[0].DOC||('INV'+new Date().toLocaleDateString('pt-BR').replace(/\D/g,''));
+  const ws=XLSX.utils.json_to_sheet(data);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Resultado');
+  XLSX.writeFile(wb,`SDB_InvGeral_${doc}.csv`,{bookType:'csv'});
+  showToast('CSV exportado: SDB_InvGeral_'+doc+'.csv');
+}
+
+// ===== INV GERAL TABS =====
+function switchInvTab(tabId,btn){
+  document.querySelectorAll('.inv-geral-tabs .tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-'+tabId)?.classList.add('active');
+}
+
+// ===== EXPORT =====
+function exportData(type){
+  const data=type==='ultimociclo'?[...STATE.contagens]:STATE.contagens;
+  const rows=data.map(r=>({'Data/Hora':r.dataHora,'SKU':r.sku,'Armazém':r.armazem,'Descrição':r.descricao,'Qtd Sistema':r.qtdSistema,'Qtd Físico':r.qtdFisica,'Dif Unitária':r.difUnit,'Dif Financeira':r.difFin,'Ciclo':r.ciclo,'Usuário':r.usuario,'Status':r.status}));
+  const ws=XLSX.utils.json_to_sheet(rows);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Dados');
+  XLSX.writeFile(wb,`SDB_${type}_${new Date().toISOString().slice(0,10)}.xlsx`);
+  showToast('Arquivo Excel exportado!');
+}
+function exportCSV(type){
+  const data=STATE.contagens;
+  const rows=data.map(r=>({'Data/Hora':r.dataHora,'SKU':r.sku,'Armazém':r.armazem,'Descrição':r.descricao,'Qtd Sistema':r.qtdSistema,'Qtd Físico':r.qtdFisica,'Diferença':r.difUnit,'Dif Financeira':r.difFin,'Ciclo':r.ciclo,'Status':r.status}));
+  const ws=XLSX.utils.json_to_sheet(rows);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'CSV');
+  XLSX.writeFile(wb,`SDB_${type}_${new Date().toISOString().slice(0,10)}.csv`,{bookType:'csv'});
+  showToast('CSV exportado!');
+}
+
+// ===== BARCODE =====
+let barcodeTargetInput='inputSKU';
+document.getElementById('btnBarcode')?.addEventListener('click',()=>openBarcodeModalFor('inputSKU'));
+function openBarcodeModalFor(targetId='inputSKU'){
+  barcodeTargetInput=targetId;
+  document.getElementById('barcodeOverlay').classList.add('show');
+  startScanner();
+}
+function openBarcodeModal(){openBarcodeModalFor('inputSKU');}
+function closeBarcodeModal(){
+  document.getElementById('barcodeOverlay').classList.remove('show');
+  if(typeof Quagga!=='undefined'){try{Quagga.stop();}catch(e){}}
+}
+async function startScanner(){
+  if (typeof Quagga === 'undefined') {
+    showToast('Biblioteca de scanner não disponível', 'warning');
+    return;
+  }
+
+  if (!window.isSecureContext) {
+    showToast('A câmera exige HTTPS. Publique pelo Firebase Hosting ou Apps Script /exec.', 'error');
+    closeBarcodeModal();
+    return;
+  }
+
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    showToast('Este navegador não liberou acesso à câmera.', 'error');
+    closeBarcodeModal();
+    return;
+  }
+
+  try {
+    // Solicita permissão antes de iniciar o Quagga, priorizando a câmera traseira no celular.
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' } },
+      audio: false
+    });
+    stream.getTracks().forEach(track => track.stop());
+  } catch (err) {
+    const msg = err?.name === 'NotAllowedError'
+      ? 'Permissão da câmera negada. No navegador, libere a câmera para este site.'
+      : 'Câmera não disponível: ' + (err?.message || String(err));
+    showToast(msg, 'error');
+    closeBarcodeModal();
+    return;
+  }
+
+  try {
+    Quagga.offDetected && Quagga.offDetected();
+  } catch(e) {}
+
+  Quagga.init({
+    inputStream: {
+      name: 'Live',
+      type: 'LiveStream',
+      target: document.querySelector('#interactive'),
+      constraints: {
+        facingMode: { ideal: 'environment' },
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      }
+    },
+    locate: true,
+    decoder: {
+      readers: ['code_128_reader','ean_reader','ean_8_reader','code_39_reader','upc_reader','upc_e_reader']
+    }
+  }, err => {
+    if (err) {
+      showToast('Câmera não disponível: ' + (err.message || String(err)), 'error');
+      closeBarcodeModal();
+      return;
+    }
+    Quagga.start();
+  });
+
+  let lastCode = '', lastTime = 0;
+  Quagga.onDetected(result => {
+    const code = result?.codeResult?.code;
+    if (!code) return;
+
+    const now = Date.now();
+    if (code === lastCode && now - lastTime < 2000) return;
+
+    lastCode = code;
+    lastTime = now;
+
+    const res = document.getElementById('scannerResult');
+    res.textContent = '✓ Detectado: ' + code;
+    res.style.display = 'block';
+
+    setTimeout(() => {
+      const target = document.getElementById(barcodeTargetInput || 'inputSKU');
+      if (target) target.value = code;
+
+      closeBarcodeModal();
+
+      if ((barcodeTargetInput || 'inputSKU') === 'inv1SKU') searchInvSKU();
+      else searchSKU();
+    }, 700);
+  });
+}
+
+// ===== MODAL =====
+function closeModal(){document.getElementById('modalOverlay').classList.remove('show');}
+document.getElementById('modalOverlay').addEventListener('click',e=>{if(e.target===document.getElementById('modalOverlay'))closeModal();});
+</script>
+</body>
+</html>
