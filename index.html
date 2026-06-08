@@ -378,29 +378,6 @@ body{font-family:var(--font);background:var(--off-white);color:var(--navy);min-h
   .sidebar-toggle{display:flex!important}
 }
 
-
-
-/* ===== AJUSTES FIREBASE/MOBILE ===== */
-.table-wrapper,
-.table-wrap{
-  overflow-x:auto!important;
-  overflow-y:visible!important;
-  -webkit-overflow-scrolling:touch;
-  max-width:100%;
-}
-.data-table{min-width:920px;}
-@media(max-width:768px){
-  html,body{height:auto;min-height:100%;overflow-x:hidden;overflow-y:auto!important;}
-  #screen-app.active{display:block!important;min-height:100vh;overflow-y:auto!important;}
-  .main,.main-content{margin-left:0!important;width:100%!important;min-height:100vh;overflow-y:visible!important;}
-  .content,.pages-container{padding:12px!important;overflow-y:visible!important;}
-  .sidebar{transform:translateX(-105%);width:280px!important;max-width:86vw;}
-  .sidebar.mobile-open,.sidebar.open{transform:translateX(0)!important;}
-  .modal,.modal-box{max-width:96vw!important;}
-  .login-left{display:none!important;}
-  .login-right{width:100%!important;min-height:100vh;padding:28px 20px!important;}
-}
-
 </style>
 </head>
 <body>
@@ -575,7 +552,7 @@ body{font-family:var(--font);background:var(--off-white);color:var(--navy);min-h
       </div>
 
       <div class="dashboard-filters clean">
-        <div class="filter-group"><label>ARMAZÉM</label><select id="fArmazem"><option value="">Todos</option><option>01</option><option>02</option><option>03</option><option>10</option><option>98</option></select></div>
+        <div class="filter-group"><label>ARMAZÉM</label><select id="fArmazem"><option value="">Todos</option><option>1</option><option>2</option><option>3</option><option>10</option><option>98</option></select></div>
         <div class="filter-group"><label>CICLO</label><select id="fCiclo"><option value="ultimo">Último ciclo</option><option value="todos">Todos</option></select></div>
       </div>
 
@@ -613,8 +590,8 @@ body{font-family:var(--font);background:var(--off-white);color:var(--navy);min-h
             <label>Armazém *</label>
             <select id="inputArmazem" class="form-input">
               <option value="">Selecione...</option>
-              <option value="01">01</option><option value="02">02</option>
-              <option value="03">03</option><option value="10">10</option><option value="98">98</option>
+              <option value="1">1</option><option value="2">2</option>
+              <option value="3">3</option><option value="10">10</option><option value="98">98</option>
             </select>
           </div>
           <div class="form-group">
@@ -676,7 +653,7 @@ body{font-family:var(--font);background:var(--off-white);color:var(--navy);min-h
       <div class="filters-bar">
         <input type="text" placeholder="🔍 Buscar SKU / Descrição..." class="search-input" id="searchUC">
         <select class="filter-select" id="filterUCSit"><option value="">Situação</option><option value="BATENDO">✅ Batendo</option><option value="DEFICIT">🔴 Déficit</option><option value="SUPERAVIT">🟡 Superávit</option></select>
-        <select class="filter-select" id="filterUCArm"><option value="">Armazém</option><option>01</option><option>02</option><option>03</option><option>10</option><option>98</option></select>
+        <select class="filter-select" id="filterUCArm"><option value="">Armazém</option><option>1</option><option>2</option><option>3</option><option>10</option><option>98</option></select>
       </div>
       <div class="table-card">
         <div class="table-wrapper">
@@ -723,7 +700,7 @@ body{font-family:var(--font);background:var(--off-white);color:var(--navy);min-h
       <div class="filters-bar">
         <input type="text" placeholder="🔍 Buscar..." class="search-input" id="searchGeral">
         <select class="filter-select" id="filterGeralSit"><option value="">Situação</option><option value="BATENDO">✅ Batendo</option><option value="DEFICIT">🔴 Déficit</option><option value="SUPERAVIT">🟡 Superávit</option></select>
-        <select class="filter-select" id="filterGeralArm"><option value="">Armazém</option><option>01</option><option>02</option><option>03</option><option>10</option><option>98</option></select>
+        <select class="filter-select" id="filterGeralArm"><option value="">Armazém</option><option>1</option><option>2</option><option>3</option><option>10</option><option>98</option></select>
         <select class="filter-select" id="filterGeralCiclo"><option value="">Ciclo</option><option value="ultimo">Último</option><option value="anteriores">Anteriores</option></select>
         <select class="filter-select" id="filterGeralData"><option value="">Período rápido</option><option value="hoje">Hoje</option><option value="semana">Esta Semana</option><option value="mes">Este Mês</option></select>
         <input type="date" class="filter-select" id="filterGeralDataIni" title="Data inicial">
@@ -823,7 +800,7 @@ body{font-family:var(--font);background:var(--off-white);color:var(--navy);min-h
       </div>
       <div class="filters-bar">
         <input type="text" placeholder="🔍 Buscar SKU ou Descrição..." class="search-input" id="searchSKU" oninput="renderSKU()">
-        <select class="filter-select" id="filterSKUArm" onchange="renderSKU()"><option value="">Armazém Padrão</option><option>01</option><option>02</option><option>03</option><option>10</option><option>98</option></select>
+        <select class="filter-select" id="filterSKUArm" onchange="renderSKU()"><option value="">Armazém Padrão</option><option>1</option><option>2</option><option>3</option><option>10</option><option>98</option></select>
       </div>
       <div class="table-card">
         <div class="table-wrapper">
@@ -886,7 +863,7 @@ body{font-family:var(--font);background:var(--off-white);color:var(--navy);min-h
       </div>
       <div class="filters-bar">
         <input type="text" placeholder="🔍 Buscar código ou endereço..." class="search-input" id="searchEnd" oninput="renderEnderecamento()">
-        <select class="filter-select" id="filterEndArm" onchange="renderEnderecamento()"><option value="">Armazém</option><option>01</option><option>02</option><option>03</option><option>10</option><option>98</option></select>
+        <select class="filter-select" id="filterEndArm" onchange="renderEnderecamento()"><option value="">Armazém</option><option>1</option><option>2</option><option>3</option><option>10</option><option>98</option></select>
       </div>
       <div class="table-card">
         <div class="table-wrapper">
@@ -977,7 +954,7 @@ body{font-family:var(--font);background:var(--off-white);color:var(--navy);min-h
               </div>
               <button type="button" class="btn-secondary" style="margin-top:6px;padding:7px 10px;font-size:12px" onclick="openBarcodeModalFor('inv1SKU')">Bipar código</button>
             </div>
-            <div class="form-group"><label>Armazém *</label><select id="inv1Arm" class="form-input"><option value="">Selecione...</option><option>01</option><option>02</option><option>03</option><option>10</option><option>98</option></select></div>
+            <div class="form-group"><label>Armazém *</label><select id="inv1Arm" class="form-input"><option value="">Selecione...</option><option>1</option><option>2</option><option>3</option><option>10</option><option>98</option></select></div>
             <div class="form-group"><label>Quantidade *</label><input type="number" id="inv1Qtd" class="form-input large-input" placeholder="0" step="0.001" min="0" inputmode="decimal"></div>
           </div>
           <div class="form-actions">
@@ -1026,7 +1003,7 @@ body{font-family:var(--font);background:var(--off-white);color:var(--navy);min-h
         <div class="page-header" style="padding:0 0 16px">
           <h3 style="font-family:var(--font-cond);font-size:18px;font-weight:800;color:var(--navy)">Resultado Final do Inventário Geral</h3>
           <div class="header-actions">
-            <select class="filter-select" id="filterResArm"><option value="">Todos os Armazéns</option><option>01</option><option>02</option><option>03</option><option>10</option><option>98</option></select>
+            <select class="filter-select" id="filterResArm"><option value="">Todos os Armazéns</option><option>1</option><option>2</option><option>3</option><option>10</option><option>98</option></select>
             <button class="btn-primary" onclick="exportResultado()">
               <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
               Exportar CSV
@@ -1139,10 +1116,10 @@ function handleLogout() {
    SDB INVENTORY — app.js COMPLETO
    ============================================= */
 
-// ===== CONFIG FIREBASE =====
-// Frontend hospedado no Firebase + backend no Apps Script Web App.
-const API_URL = 'https://script.google.com/macros/s/AKfycbzl0GQgEku-BVXlJ2io-w9ImqypnZVLl1mUWF2_w9L-0sMxj1Pu1tZXDQZytvDrWAIL/exec';
-const USE_MOCK = false; // false = dados reais no Apps Script / Google Sheets
+// ===== CONFIG =====
+// Em produção, substitua pela URL do seu Apps Script Web App
+const API_URL = ''; // não usado quando hospedado no Apps Script // Ex: 'https://script.google.com/macros/s/XXXXX/exec'
+const USE_MOCK = false; // conectado ao Apps Script // true = modo demo/local, false = conectado ao Apps Script
 
 // ===== STATE =====
 const STATE = {
@@ -1161,44 +1138,44 @@ const STATE = {
 // ===== MOCK DATA =====
 const MOCK = {
   contagens: [
-    {id:'ROT-1',dataHora:'04/05/2026 08:10',sku:'1001186',descricao:'SACO SAL ZEBU 25 KG',armazem:'02',qtdFisica:4248,qtdSistema:3571.5,difUnit:676.5,difFin:365.17,valorUnit:0.54,ciclo:42,usuario:'Admin',status:'SUPERAVIT'},
-    {id:'ROT-2',dataHora:'25/04/2026 09:22',sku:'1001669',descricao:'BIG BAG 90X90X120 160G SDB',armazem:'02',qtdFisica:1081,qtdSistema:610,difUnit:471,difFin:9793.5,valorUnit:20.79,ciclo:83,usuario:'Admin',status:'SUPERAVIT'},
-    {id:'ROT-3',dataHora:'04/05/2026 10:05',sku:'1002641',descricao:'SACO SAL SDB INDUSTRIAL 50KG',armazem:'02',qtdFisica:3095,qtdSistema:2762,difUnit:333,difFin:262.8,valorUnit:0.79,ciclo:46,usuario:'Operador1',status:'SUPERAVIT'},
-    {id:'ROT-4',dataHora:'04/05/2026 11:30',sku:'1001579',descricao:'PALLET 1,20 X 1,00 (PBR)',armazem:'02',qtdFisica:80,qtdSistema:178.91,difUnit:-96.91,difFin:-3521.86,valorUnit:35.61,ciclo:47,usuario:'Admin',status:'DEFICIT'},
-    {id:'ROT-5',dataHora:'04/05/2026 12:15',sku:'1006799',descricao:'BIG BAG 190G 90X90X120 COM',armazem:'02',qtdFisica:66,qtdSistema:204.76,difUnit:-138.76,difFin:-3513.86,valorUnit:25.32,ciclo:63,usuario:'Operador1',status:'DEFICIT'},
-    {id:'ROT-6',dataHora:'04/05/2026 13:00',sku:'1007003',descricao:'BIG BAG 90X90X120 160G LISO',armazem:'02',qtdFisica:269,qtdSistema:422.5,difUnit:-153.5,difFin:-3324.03,valorUnit:21.65,ciclo:32,usuario:'Admin',status:'DEFICIT'},
-    {id:'ROT-7',dataHora:'04/05/2026 14:22',sku:'1001201',descricao:'IODATO DE POTASSIO',armazem:'02',qtdFisica:3.74,qtdSistema:3.74,difUnit:0,difFin:0,valorUnit:89,ciclo:9,usuario:'Admin',status:'BATENDO'},
-    {id:'ROT-8',dataHora:'04/05/2026 15:10',sku:'1002631',descricao:'SACO SAL INDUS DIAMANTE B 25KG',armazem:'02',qtdFisica:16250,qtdSistema:16644,difUnit:-394,difFin:-220.64,valorUnit:0.56,ciclo:41,usuario:'Operador2',status:'DEFICIT'},
-    {id:'ROT-9',dataHora:'04/05/2026 17:05',sku:'1002633',descricao:'SACO SAL PREMIUM 25KG',armazem:'02',qtdFisica:2247,qtdSistema:2834.8,difUnit:-587.8,difFin:-405.58,valorUnit:0.69,ciclo:63,usuario:'Admin',status:'DEFICIT'},
-    {id:'ROT-10',dataHora:'04/05/2026 09:00',sku:'1001698',descricao:'FILME STRETCH 500MMX30MICRAS',armazem:'02',qtdFisica:81,qtdSistema:18.45,difUnit:62.55,difFin:546.74,valorUnit:8.74,ciclo:54,usuario:'Operador2',status:'SUPERAVIT'},
+    {id:'ROT-1',dataHora:'04/05/2026 08:10',sku:'1001186',descricao:'SACO SAL ZEBU 25 KG',armazem:'2',qtdFisica:4248,qtdSistema:3571.5,difUnit:676.5,difFin:365.17,valorUnit:0.54,ciclo:42,usuario:'Admin',status:'SUPERAVIT'},
+    {id:'ROT-2',dataHora:'25/04/2026 09:22',sku:'1001669',descricao:'BIG BAG 90X90X120 160G SDB',armazem:'2',qtdFisica:1081,qtdSistema:610,difUnit:471,difFin:9793.5,valorUnit:20.79,ciclo:83,usuario:'Admin',status:'SUPERAVIT'},
+    {id:'ROT-3',dataHora:'04/05/2026 10:05',sku:'1002641',descricao:'SACO SAL SDB INDUSTRIAL 50KG',armazem:'2',qtdFisica:3095,qtdSistema:2762,difUnit:333,difFin:262.8,valorUnit:0.79,ciclo:46,usuario:'Operador1',status:'SUPERAVIT'},
+    {id:'ROT-4',dataHora:'04/05/2026 11:30',sku:'1001579',descricao:'PALLET 1,20 X 1,00 (PBR)',armazem:'2',qtdFisica:80,qtdSistema:178.91,difUnit:-96.91,difFin:-3521.86,valorUnit:35.61,ciclo:47,usuario:'Admin',status:'DEFICIT'},
+    {id:'ROT-5',dataHora:'04/05/2026 12:15',sku:'1006799',descricao:'BIG BAG 190G 90X90X120 COM',armazem:'2',qtdFisica:66,qtdSistema:204.76,difUnit:-138.76,difFin:-3513.86,valorUnit:25.32,ciclo:63,usuario:'Operador1',status:'DEFICIT'},
+    {id:'ROT-6',dataHora:'04/05/2026 13:00',sku:'1007003',descricao:'BIG BAG 90X90X120 160G LISO',armazem:'2',qtdFisica:269,qtdSistema:422.5,difUnit:-153.5,difFin:-3324.03,valorUnit:21.65,ciclo:32,usuario:'Admin',status:'DEFICIT'},
+    {id:'ROT-7',dataHora:'04/05/2026 14:22',sku:'1001201',descricao:'IODATO DE POTASSIO',armazem:'2',qtdFisica:3.74,qtdSistema:3.74,difUnit:0,difFin:0,valorUnit:89,ciclo:9,usuario:'Admin',status:'BATENDO'},
+    {id:'ROT-8',dataHora:'04/05/2026 15:10',sku:'1002631',descricao:'SACO SAL INDUS DIAMANTE B 25KG',armazem:'2',qtdFisica:16250,qtdSistema:16644,difUnit:-394,difFin:-220.64,valorUnit:0.56,ciclo:41,usuario:'Operador2',status:'DEFICIT'},
+    {id:'ROT-9',dataHora:'04/05/2026 17:05',sku:'1002633',descricao:'SACO SAL PREMIUM 25KG',armazem:'2',qtdFisica:2247,qtdSistema:2834.8,difUnit:-587.8,difFin:-405.58,valorUnit:0.69,ciclo:63,usuario:'Admin',status:'DEFICIT'},
+    {id:'ROT-10',dataHora:'04/05/2026 09:00',sku:'1001698',descricao:'FILME STRETCH 500MMX30MICRAS',armazem:'2',qtdFisica:81,qtdSistema:18.45,difUnit:62.55,difFin:546.74,valorUnit:8.74,ciclo:54,usuario:'Operador2',status:'SUPERAVIT'},
   ],
   skus:[
-    {sku:'1001186',descricao:'SACO SAL ZEBU 25 KG',unidade:'UN',armazem:'02',ativo:true},
-    {sku:'1001669',descricao:'BIG BAG 90X90X120 160G SDB',unidade:'UN',armazem:'02',ativo:true},
-    {sku:'1002641',descricao:'SACO SAL SDB INDUSTRIAL 50KG',unidade:'UN',armazem:'02',ativo:true},
-    {sku:'1001698',descricao:'FILME STRETCH 500MMX30MICRAS',unidade:'RL',armazem:'02',ativo:true},
-    {sku:'1002683',descricao:'FOLHA DE PAPELAO ONDULADA',unidade:'UN',armazem:'03',ativo:true},
-    {sku:'1001200',descricao:'FERROCIANETO DE SODIO GRAU ALIMENTICIO',unidade:'KG',armazem:'02',ativo:true},
+    {sku:'1001186',descricao:'SACO SAL ZEBU 25 KG',unidade:'UN',armazem:'2',ativo:true},
+    {sku:'1001669',descricao:'BIG BAG 90X90X120 160G SDB',unidade:'UN',armazem:'2',ativo:true},
+    {sku:'1002641',descricao:'SACO SAL SDB INDUSTRIAL 50KG',unidade:'UN',armazem:'2',ativo:true},
+    {sku:'1001698',descricao:'FILME STRETCH 500MMX30MICRAS',unidade:'RL',armazem:'2',ativo:true},
+    {sku:'1002683',descricao:'FOLHA DE PAPELAO ONDULADA',unidade:'UN',armazem:'3',ativo:true},
+    {sku:'1001200',descricao:'FERROCIANETO DE SODIO GRAU ALIMENTICIO',unidade:'KG',armazem:'2',ativo:true},
     {sku:'1001465',descricao:'LACRE BAGSEAL 44CM COR AZUL',unidade:'UN',armazem:'10',ativo:true},
-    {sku:'1001201',descricao:'IODATO DE POTASSIO',unidade:'KG',armazem:'02',ativo:true},
-    {sku:'1002631',descricao:'SACO SAL INDUS DIAMANTE B 25KG',unidade:'UN',armazem:'02',ativo:true},
-    {sku:'1002633',descricao:'SACO SAL PREMIUM 25KG',unidade:'UN',armazem:'02',ativo:true},
-    {sku:'1006799',descricao:'BIG BAG 190G 90X90X120 COM',unidade:'UN',armazem:'02',ativo:true},
-    {sku:'1007003',descricao:'BIG BAG 90X90X120 160G LISO',unidade:'UN',armazem:'02',ativo:true},
-    {sku:'1001579',descricao:'PALLET 1,20 X 1,00 (PBR)',unidade:'UN',armazem:'02',ativo:true},
+    {sku:'1001201',descricao:'IODATO DE POTASSIO',unidade:'KG',armazem:'2',ativo:true},
+    {sku:'1002631',descricao:'SACO SAL INDUS DIAMANTE B 25KG',unidade:'UN',armazem:'2',ativo:true},
+    {sku:'1002633',descricao:'SACO SAL PREMIUM 25KG',unidade:'UN',armazem:'2',ativo:true},
+    {sku:'1006799',descricao:'BIG BAG 190G 90X90X120 COM',unidade:'UN',armazem:'2',ativo:true},
+    {sku:'1007003',descricao:'BIG BAG 90X90X120 160G LISO',unidade:'UN',armazem:'2',ativo:true},
+    {sku:'1001579',descricao:'PALLET 1,20 X 1,00 (PBR)',unidade:'UN',armazem:'2',ativo:true},
   ],
   ajustes:[
-    {id:'ADJ-1',dataHora:'07/05/2026 09:15',sku:'1002633',descricao:'SACO SAL PREMIUM 25KG',armazem:'02',tipoAjuste:'AJUSTE NEGATIVO',observacao:'Divergência identificada na contagem física. Aprovado pelo supervisor.',usuario:'Admin'},
-    {id:'ADJ-2',dataHora:'05/05/2026 14:22',sku:'1006799',descricao:'BIG BAG 190G 90X90X120 COM',armazem:'02',tipoAjuste:'AJUSTE NEGATIVO',observacao:'Produto danificado descartado',usuario:'Operador1'},
-    {id:'ADJ-3',dataHora:'03/05/2026 10:00',sku:'1001669',descricao:'BIG BAG 90X90X120 160G SDB',armazem:'02',tipoAjuste:'AJUSTE POSITIVO',observacao:'Recebimento não lançado no sistema ERP',usuario:'Admin'},
-    {id:'ADJ-4',dataHora:'28/04/2026 16:30',sku:'1001579',descricao:'PALLET 1,20 X 1,00 (PBR)',armazem:'02',tipoAjuste:'AJUSTE NEGATIVO',observacao:'Pallets quebrados descartados em manutenção',usuario:'Operador2'},
+    {id:'ADJ-1',dataHora:'07/05/2026 09:15',sku:'1002633',descricao:'SACO SAL PREMIUM 25KG',armazem:'2',tipoAjuste:'AJUSTE NEGATIVO',observacao:'Divergência identificada na contagem física. Aprovado pelo supervisor.',usuario:'Admin'},
+    {id:'ADJ-2',dataHora:'05/05/2026 14:22',sku:'1006799',descricao:'BIG BAG 190G 90X90X120 COM',armazem:'2',tipoAjuste:'AJUSTE NEGATIVO',observacao:'Produto danificado descartado',usuario:'Operador1'},
+    {id:'ADJ-3',dataHora:'03/05/2026 10:00',sku:'1001669',descricao:'BIG BAG 90X90X120 160G SDB',armazem:'2',tipoAjuste:'AJUSTE POSITIVO',observacao:'Recebimento não lançado no sistema ERP',usuario:'Admin'},
+    {id:'ADJ-4',dataHora:'28/04/2026 16:30',sku:'1001579',descricao:'PALLET 1,20 X 1,00 (PBR)',armazem:'2',tipoAjuste:'AJUSTE NEGATIVO',observacao:'Pallets quebrados descartados em manutenção',usuario:'Operador2'},
   ],
   enderecamento:[
-    {codigo:'1001186',descricao:'SACO SAL ZEBU 25 KG',armazem:'02',endereco:'A-01-01',data:'01/05/2026'},
-    {codigo:'1001669',descricao:'BIG BAG 90X90X120 160G SDB',armazem:'02',endereco:'B-02-03',data:'02/05/2026'},
-    {codigo:'1002641',descricao:'SACO SAL SDB INDUSTRIAL 50KG',armazem:'02',endereco:'A-03-02',data:'03/05/2026'},
-    {codigo:'1001698',descricao:'FILME STRETCH 500MMX30MICRAS',armazem:'02',endereco:'C-01-05',data:'04/05/2026'},
-    {codigo:'1001200',descricao:'FERROCIANETO DE SODIO GRAU ALIMENTICIO',armazem:'02',endereco:'D-02-01',data:'01/05/2026'},
+    {codigo:'1001186',descricao:'SACO SAL ZEBU 25 KG',armazem:'2',endereco:'A-01-01',data:'01/05/2026'},
+    {codigo:'1001669',descricao:'BIG BAG 90X90X120 160G SDB',armazem:'2',endereco:'B-02-03',data:'02/05/2026'},
+    {codigo:'1002641',descricao:'SACO SAL SDB INDUSTRIAL 50KG',armazem:'2',endereco:'A-03-02',data:'03/05/2026'},
+    {codigo:'1001698',descricao:'FILME STRETCH 500MMX30MICRAS',armazem:'2',endereco:'C-01-05',data:'04/05/2026'},
+    {codigo:'1001200',descricao:'FERROCIANETO DE SODIO GRAU ALIMENTICIO',armazem:'2',endereco:'D-02-01',data:'01/05/2026'},
   ],
   importHistory:[
     {dataHora:'07/05/2026 08:32',arquivo:'saldo_sistema_07052026.xlsx',registros:2015,usuario:'Admin',status:'sucesso'},
@@ -1312,43 +1289,11 @@ document.getElementById('mobileSidebarBackdrop')?.addEventListener('click',close
 window.addEventListener('resize',()=>{if(window.innerWidth>768) closeMobileMenu();});
 
 // ===== API =====
-async function apiCall(action, data = {}) {
+async function apiCall(action, data={}){
   if (USE_MOCK) return mockAPI(action, data);
 
-  showLoading('Aguarde...');
-
-  // Firebase/Hosting externo: usa fetch para chamar o Apps Script publicado como Web App.
-  if (API_URL) {
-    try {
-      const resp = await fetch(API_URL, {
-        method: 'POST',
-        headers: {
-          // text/plain evita preflight CORS em Web App do Apps Script.
-          'Content-Type': 'text/plain;charset=utf-8'
-        },
-        body: JSON.stringify({ action, data })
-      });
-
-      const json = await resp.json();
-      hideLoading();
-
-      if (!json || json.success === false) {
-        const msg = json?.error || 'Erro desconhecido';
-        showToast(msg, 'error');
-        throw new Error(msg);
-      }
-
-      return json;
-    } catch (err) {
-      hideLoading();
-      const msg = err?.message || String(err) || 'Erro ao comunicar com o Apps Script';
-      showToast(msg, 'error');
-      throw err;
-    }
-  }
-
-  // Compatibilidade: caso volte a hospedar direto no Apps Script.
   if (typeof google !== 'undefined' && google.script && google.script.run) {
+    showLoading('Aguarde...');
     return new Promise((resolve, reject) => {
       google.script.run
         .withSuccessHandler(json => {
@@ -1371,8 +1316,7 @@ async function apiCall(action, data = {}) {
     });
   }
 
-  hideLoading();
-  throw new Error('API_URL não configurada. Informe a URL /exec do Apps Script.');
+  return Promise.reject(new Error('google.script.run não disponível. Abra pelo deploy do Apps Script.'));
 }
 
 function mockAPI(action, data={}){
@@ -1854,7 +1798,7 @@ function openAjusteModal(){
     <div class="modal-header"><h3>Registrar Ajuste</h3><button class="modal-close" onclick="closeModal()">×</button></div>
     <div class="form-grid-2">
       <div class="form-group"><label>SKU *</label><input class="form-input" id="ajSKU" placeholder="Ex: 1001186"></div>
-      <div class="form-group"><label>Armazém</label><select class="form-input" id="ajArm"><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="10">10</option><option value="98">98</option></select></div>
+      <div class="form-group"><label>Armazém</label><select class="form-input" id="ajArm"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="10">10</option><option value="98">98</option></select></div>
       <div class="form-group"><label>Tipo</label><select class="form-input" id="ajTipo"><option value="AJUSTE POSITIVO">AJUSTE POSITIVO</option><option value="AJUSTE NEGATIVO">AJUSTE NEGATIVO</option></select></div>
       <div class="form-group"><label>Usuário</label><input class="form-input" id="ajUser" value="${STATE.currentUser.name}"></div>
       <div class="form-group span-2"><label>Observação *</label><textarea class="form-input" id="ajObs" rows="3" placeholder="Descreva o motivo do ajuste"></textarea></div>
@@ -1966,7 +1910,7 @@ function openEndModal(codigo=null){
     <div class="modal-header"><h3>${codigo?'Editar':'Novo'} Endereço</h3><button class="modal-close" onclick="closeModal()">×</button></div>
     <div class="form-grid-2">
       <div class="form-group"><label>Código *</label><input class="form-input" id="eCodigo" value="${existing?.codigo||''}" ${codigo?'readonly':''}></div>
-      <div class="form-group"><label>Armazém</label><select class="form-input" id="eArmazem"><option value="01">01</option><option value="02" ${existing?.armazem==='02'||!existing?'selected':''}>02</option><option value="03">03</option><option value="10">10</option><option value="98">98</option></select></div>
+      <div class="form-group"><label>Armazém</label><select class="form-input" id="eArmazem"><option value="1">1</option><option value="02" ${existing?.armazem==='02'||!existing?'selected':''}>02</option><option value="3">3</option><option value="10">10</option><option value="98">98</option></select></div>
       <div class="form-group"><label>Endereço <span style="color:var(--gray-400);font-weight:500">(opcional)</span></label><input class="form-input" id="eEnd" value="${existing?.endereco||''}" placeholder="Ex: A-01-01"></div>
       <div class="form-group"><label>Data</label><input type="date" class="form-input" id="eData" value="${new Date().toISOString().slice(0,10)}"></div>
     </div>
@@ -2376,92 +2320,26 @@ function closeBarcodeModal(){
   document.getElementById('barcodeOverlay').classList.remove('show');
   if(typeof Quagga!=='undefined'){try{Quagga.stop();}catch(e){}}
 }
-async function startScanner(){
-  if (typeof Quagga === 'undefined') {
-    showToast('Biblioteca de scanner não disponível', 'warning');
-    return;
-  }
-
-  if (!window.isSecureContext) {
-    showToast('A câmera exige HTTPS. Publique pelo Firebase Hosting ou Apps Script /exec.', 'error');
-    closeBarcodeModal();
-    return;
-  }
-
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    showToast('Este navegador não liberou acesso à câmera.', 'error');
-    closeBarcodeModal();
-    return;
-  }
-
-  try {
-    // Solicita permissão antes de iniciar o Quagga, priorizando a câmera traseira no celular.
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: 'environment' } },
-      audio: false
-    });
-    stream.getTracks().forEach(track => track.stop());
-  } catch (err) {
-    const msg = err?.name === 'NotAllowedError'
-      ? 'Permissão da câmera negada. No navegador, libere a câmera para este site.'
-      : 'Câmera não disponível: ' + (err?.message || String(err));
-    showToast(msg, 'error');
-    closeBarcodeModal();
-    return;
-  }
-
-  try {
-    Quagga.offDetected && Quagga.offDetected();
-  } catch(e) {}
-
-  Quagga.init({
-    inputStream: {
-      name: 'Live',
-      type: 'LiveStream',
-      target: document.querySelector('#interactive'),
-      constraints: {
-        facingMode: { ideal: 'environment' },
-        width: { ideal: 1280 },
-        height: { ideal: 720 }
-      }
-    },
-    locate: true,
-    decoder: {
-      readers: ['code_128_reader','ean_reader','ean_8_reader','code_39_reader','upc_reader','upc_e_reader']
-    }
-  }, err => {
-    if (err) {
-      showToast('Câmera não disponível: ' + (err.message || String(err)), 'error');
-      closeBarcodeModal();
-      return;
-    }
+function startScanner(){
+  if(typeof Quagga==='undefined'){showToast('Biblioteca de scanner não disponível','warning');return;}
+  Quagga.init({inputStream:{name:'Live',type:'LiveStream',target:document.querySelector('#interactive'),constraints:{facingMode:'environment',width:640,height:480}},decoder:{readers:['code_128_reader','ean_reader','code_39_reader','upc_reader']}},err=>{
+    if(err){showToast('Câmera não disponível: '+err.message,'error');closeBarcodeModal();return;}
     Quagga.start();
   });
-
-  let lastCode = '', lastTime = 0;
-  Quagga.onDetected(result => {
-    const code = result?.codeResult?.code;
-    if (!code) return;
-
-    const now = Date.now();
-    if (code === lastCode && now - lastTime < 2000) return;
-
-    lastCode = code;
-    lastTime = now;
-
-    const res = document.getElementById('scannerResult');
-    res.textContent = '✓ Detectado: ' + code;
-    res.style.display = 'block';
-
-    setTimeout(() => {
-      const target = document.getElementById(barcodeTargetInput || 'inputSKU');
-      if (target) target.value = code;
-
+  let lastCode='',lastTime=0;
+  Quagga.onDetected(result=>{
+    const code=result.codeResult.code;
+    const now=Date.now();
+    if(code===lastCode&&now-lastTime<2000)return;
+    lastCode=code;lastTime=now;
+    const res=document.getElementById('scannerResult');
+    res.textContent='✓ Detectado: '+code;res.style.display='block';
+    setTimeout(()=>{
+      const target=document.getElementById(barcodeTargetInput||'inputSKU');
+      if(target){target.value=code;}
       closeBarcodeModal();
-
-      if ((barcodeTargetInput || 'inputSKU') === 'inv1SKU') searchInvSKU();
-      else searchSKU();
-    }, 700);
+      if((barcodeTargetInput||'inputSKU')==='inv1SKU') searchInvSKU(); else searchSKU();
+    },700);
   });
 }
 
