@@ -1118,7 +1118,7 @@ function handleLogout() {
 
 // ===== CONFIG =====
 // Em produção, substitua pela URL do seu Apps Script Web App
-const API_URL = ''; // não usado quando hospedado no Apps Script // Ex: 'https://script.google.com/macros/s/XXXXX/exec'
+const API_URL = 'https://script.google.com/macros/s/AKfycbzl0GQgEku-BVXlJ2io-w9ImqypnZVLl1mUWF2_w9L-0sMxj1Pu1tZXDQZytvDrWAIL/exec'; // URL do Web App Apps Script (/exec)
 const USE_MOCK = false; // conectado ao Apps Script // true = modo demo/local, false = conectado ao Apps Script
 
 // ===== STATE =====
@@ -1289,9 +1289,15 @@ document.getElementById('mobileSidebarBackdrop')?.addEventListener('click',close
 window.addEventListener('resize',()=>{if(window.innerWidth>768) closeMobileMenu();});
 
 // ===== API =====
-const API_URL = 'https://script.google.com/macros/s/AKfycbzl0GQgEku-BVXlJ2io-w9ImqypnZVLl1mUWF2_w9L-0sMxj1Pu1tZXDQZytvDrWAIL/exec';
-
 async function apiCall(action, data = {}) {
+  if (USE_MOCK) return mockAPI(action, data);
+
+  if (!API_URL || !API_URL.includes('/exec')) {
+    const msg = 'API_URL não configurada. Informe a URL /exec do Apps Script.';
+    showToast(msg, 'error');
+    throw new Error(msg);
+  }
+
   showLoading('Aguarde...');
 
   try {
@@ -1304,18 +1310,20 @@ async function apiCall(action, data = {}) {
     });
 
     const json = await resp.json();
-
     hideLoading();
 
-    if (!json.success) {
-      throw new Error(json.error || 'Erro desconhecido');
+    if (!json || json.success === false) {
+      const msg = json?.error || 'Erro desconhecido';
+      showToast(msg, 'error');
+      throw new Error(msg);
     }
 
     return json;
 
   } catch (e) {
     hideLoading();
-    showToast(e.message, 'error');
+    const msg = e?.message || String(e) || 'Erro ao comunicar com o Apps Script';
+    showToast(msg, 'error');
     throw e;
   }
 }
