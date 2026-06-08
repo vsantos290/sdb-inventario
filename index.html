@@ -1289,34 +1289,35 @@ document.getElementById('mobileSidebarBackdrop')?.addEventListener('click',close
 window.addEventListener('resize',()=>{if(window.innerWidth>768) closeMobileMenu();});
 
 // ===== API =====
-async function apiCall(action, data={}){
-  if (USE_MOCK) return mockAPI(action, data);
+const API_URL = 'https://script.google.com/macros/s/AKfycbzl0GQgEku-BVXlJ2io-w9ImqypnZVLl1mUWF2_w9L-0sMxj1Pu1tZXDQZytvDrWAIL/exec';
 
-  if (typeof google !== 'undefined' && google.script && google.script.run) {
-    showLoading('Aguarde...');
-    return new Promise((resolve, reject) => {
-      google.script.run
-        .withSuccessHandler(json => {
-          hideLoading();
-          if (!json || json.success === false) {
-            const msg = json?.error || 'Erro desconhecido';
-            showToast(msg, 'error');
-            reject(new Error(msg));
-            return;
-          }
-          resolve(json);
-        })
-        .withFailureHandler(err => {
-          hideLoading();
-          const msg = err?.message || String(err) || 'Erro ao comunicar com o Apps Script';
-          showToast(msg, 'error');
-          reject(new Error(msg));
-        })
-        .api(action, data);
+async function apiCall(action, data = {}) {
+  showLoading('Aguarde...');
+
+  try {
+    const resp = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8'
+      },
+      body: JSON.stringify({ action, data })
     });
-  }
 
-  return Promise.reject(new Error('google.script.run não disponível. Abra pelo deploy do Apps Script.'));
+    const json = await resp.json();
+
+    hideLoading();
+
+    if (!json.success) {
+      throw new Error(json.error || 'Erro desconhecido');
+    }
+
+    return json;
+
+  } catch (e) {
+    hideLoading();
+    showToast(e.message, 'error');
+    throw e;
+  }
 }
 
 function mockAPI(action, data={}){
