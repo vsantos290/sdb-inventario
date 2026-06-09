@@ -1512,6 +1512,12 @@ function normDateLocal(v){
   const d=new Date(s);
   return isNaN(d.getTime())?'':d.toISOString().slice(0,10);
 }
+function displayDateLocal(v){
+  const iso=normDateLocal(v);
+  if(!iso) return v ?? '';
+  const [y,m,d]=iso.split('-');
+  return `${d}/${m}/${y}`;
+}
 function dateTimeLocalMs(v){
   if(!v) return 0;
   const s=String(v).trim();
@@ -1527,12 +1533,8 @@ function getSaldoSistemaLocal(sku, armazem){
     normArm(x.armazem)===normArm(armazem) &&
     normDateLocal(x.dataRelatorio)===hoje
   );
-  if(!rows.length){
-    rows=(STATE.saldoSistema||[]).filter(x=>
-      String(x.codigo)===String(sku) &&
-      normArm(x.armazem)===normArm(armazem)
-    );
-  }
+  // Regra final: só considera saldo com DATA_RELATORIO igual à data de hoje.
+  // Se não houver saldo nessa data, não deve comparar usando relatório antigo.
   rows.sort((a,b)=>dateTimeLocalMs(b.dataImportacao)-dateTimeLocalMs(a.dataImportacao));
   return rows[0]||null;
 }
@@ -2025,7 +2027,7 @@ function showPreview(type,data,filename){
   const bodyEl=document.getElementById(bodyMap[type]);
   const infoEl=document.getElementById(infoMap[type]);
   if(hdrEl)hdrEl.innerHTML=headers.map(h=>`<th>${h}</th>`).join('');
-  if(bodyEl)bodyEl.innerHTML=data.slice(1,6).map(r=>`<tr>${headers.map((_,i)=>`<td>${r[i]!==undefined?r[i]:''}</td>`).join('')}</tr>`).join('');
+  if(bodyEl)bodyEl.innerHTML=data.slice(1,6).map(r=>`<tr>${headers.map((h,i)=>{const name=String(h||'').trim().toUpperCase(); const val=r[i]!==undefined?r[i]:''; return `<td>${name.includes('DATA')?displayDateLocal(val):val}</td>`;}).join('')}</tr>`).join('');
   if(infoEl)infoEl.textContent=`${filename} · ${data.length-1} registros`;
 }
 function cancelUpload(type){
@@ -2054,6 +2056,8 @@ async function confirmImport(type){
 
   if(type==='saldo'){
     await apiCall('importSaldo',{filename:file.name,rows});
+    const saldoAtualizado = await apiCall('getSaldoSistema');
+    STATE.saldoSistema = saldoAtualizado.data || [];
     STATE.importHistory.unshift({dataHora:new Date().toLocaleString('pt-BR'),arquivo:file.name,registros:rows.length,usuario:STATE.currentUser.name,status:'sucesso'});
     renderImportHistory();
   } else if(type==='sku'){
