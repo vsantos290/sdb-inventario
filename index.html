@@ -1493,26 +1493,52 @@ function buildChartSKU(data){
 }
 
 // ===== CONTAGEM FORM =====
-function normDateISO(v){
+function normDateLocal(v){
   if(!v) return '';
-  if(v instanceof Date){const y=v.getFullYear();const m=String(v.getMonth()+1).padStart(2,'0');const d=String(v.getDate()).padStart(2,'0');return `${y}-${m}-${d}`;}
-  const t=String(v).trim().replace(/^'/,'');
-  const br=t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if(v instanceof Date) return v.toISOString().slice(0,10);
+  const s=String(v).trim().replace(/^'/,'');
+  const br=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
   if(br) return `${br[3]}-${br[2].padStart(2,'0')}-${br[1].padStart(2,'0')}`;
-  const iso=t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  const iso=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
   if(iso) return `${iso[1]}-${iso[2].padStart(2,'0')}-${iso[3].padStart(2,'0')}`;
-  if(/^\d+(\.\d+)?$/.test(t)){const n=Number(t); if(n>20000&&n<90000){const d=new Date(Math.round((n-25569)*86400*1000)); return d.toISOString().slice(0,10);}}
-  const d=new Date(t);
+  if(/^\d+(\.\d+)?$/.test(s)){
+    const serial=Number(s);
+    if(serial>20000&&serial<90000){
+      const ms=Date.UTC(1899,11,30)+Math.floor(serial)*86400000;
+      const d=new Date(ms);
+      return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+    }
+  }
+  const d=new Date(s);
   return isNaN(d.getTime())?'':d.toISOString().slice(0,10);
 }
-function todayISO(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function dateTimeLocalMs(v){
+  if(!v) return 0;
+  const s=String(v).trim();
+  const br=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:,?\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+  if(br) return new Date(Number(br[3]),Number(br[2])-1,Number(br[1]),Number(br[4]||0),Number(br[5]||0),Number(br[6]||0)).getTime();
+  const d=new Date(s);
+  return isNaN(d.getTime())?0:d.getTime();
+}
 function getSaldoSistemaLocal(sku, armazem){
-  const hoje=todayISO();
-  return (STATE.saldoSistema||[]).find(x=>String(x.codigo)===String(sku) && normArm(x.armazem)===normArm(armazem) && normDateISO(x.dataRelatorio)===hoje);
+  const hoje=normDateLocal(new Date());
+  let rows=(STATE.saldoSistema||[]).filter(x=>
+    String(x.codigo)===String(sku) &&
+    normArm(x.armazem)===normArm(armazem) &&
+    normDateLocal(x.dataRelatorio)===hoje
+  );
+  if(!rows.length){
+    rows=(STATE.saldoSistema||[]).filter(x=>
+      String(x.codigo)===String(sku) &&
+      normArm(x.armazem)===normArm(armazem)
+    );
+  }
+  rows.sort((a,b)=>dateTimeLocalMs(b.dataImportacao)-dateTimeLocalMs(a.dataImportacao));
+  return rows[0]||null;
 }
 function getSkuInfoLocal(sku, armazem=''){
   const cad=(STATE.skus||[]).find(s=>String(s.sku)===String(sku) && s.ativo!==false);
-  const saldo=(STATE.saldoSistema||[]).find(x=>String(x.codigo)===String(sku) && (!armazem || normArm(x.armazem)===normArm(armazem))) || null;
+  const saldo=armazem ? getSaldoSistemaLocal(sku, armazem) : ((STATE.saldoSistema||[]).find(x=>String(x.codigo)===String(sku)) || null);
   return {sku,descricao: cad?.descricao || saldo?.descricao || '',unidade: cad?.unidade || saldo?.unidade || '',armazem: cad?.armazem || saldo?.armazem || armazem || ''};
 }
 function searchSKU(){
@@ -1523,13 +1549,11 @@ function searchSKU(){
     document.getElementById('inputDescricao').value=info.descricao || 'SKU localizado na base';
     if(info.armazem) document.getElementById('inputArmazem').value=normArm(info.armazem);
     const arm=document.getElementById('inputArmazem').value;
-    const saldoAtual=getSaldoSistemaLocal(v,arm);
-    const ciclos = STATE.contagens.filter(c=>String(c.sku)===String(v)&&normArm(c.armazem)===normArm(arm)&&normDateISO(c.dataRelatorio)===normDateISO(saldoAtual?.dataRelatorio));
+    const ciclos = STATE.contagens.filter(c=>String(c.sku)===String(v)&&normArm(c.armazem)===normArm(arm));
     const maxCiclo = ciclos.length?Math.max(...ciclos.map(c=>Number(c.ciclo)||0))+1:1;
     document.getElementById('inputCiclo').value=maxCiclo;
     document.getElementById('inputQtd').focus();
-    if(!getSaldoSistemaLocal(v,arm)) showToast('SKU localizado, mas não há saldo com DATA_RELATORIO igual à data de hoje para este armazém.','warning');
-    else showToast('SKU selecionado: '+(info.descricao || v));
+    showToast('SKU selecionado: '+(info.descricao || v));
     updateComparison();
   } else showToast('SKU não encontrado em SKU_MASTER nem em SALDO_SISTEMA','warning');
 }
@@ -1541,8 +1565,8 @@ function updateComparison(){
   const qtdF=parseFloat(document.getElementById('inputQtd').value)||0;
   if(!sku||!qtdF) return;
   const arm=document.getElementById('inputArmazem').value;
-  const saldo=getSaldoSistemaLocal(sku,arm);
-  if(!saldo){showToast('Não há saldo com DATA_RELATORIO igual à data de hoje para este SKU/armazém.','warning');return;}
+  const saldo=getSaldoSistemaLocal(sku,arm) || STATE.contagens.find(c=>String(c.sku)===String(sku)&&normArm(c.armazem)===normArm(arm));
+  if(!saldo) return;
   const qtdSistema=Number(saldo.saldo ?? saldo.qtdSistema ?? 0);
   const box=document.getElementById('comparisonBox');
   box.style.display='grid';
@@ -1563,15 +1587,22 @@ async function saveContagem(){
   const arm=document.getElementById('inputArmazem').value;
   if(!sku||isNaN(qtd)||!arm){showToast('Preencha SKU, Armazém e Quantidade','error');return;}
   const info=getSkuInfoLocal(sku,arm);
-  const saldo=getSaldoSistemaLocal(sku,arm);
-  if(!saldo){showToast('Não tem saldo para contagem nesse momento. Importe saldo com DATA_RELATORIO igual à data de hoje.','error');return;}
+  const saldo=getSaldoSistemaLocal(sku,arm) || STATE.contagens.find(c=>String(c.sku)===String(sku)&&normArm(c.armazem)===normArm(arm));
   const qtdSis=Number(saldo?.saldo ?? saldo?.qtdSistema ?? 0);
   const valUnit=Number(saldo?.valorUnitario ?? saldo?.valorUnit ?? 0);
   const dif=qtd-qtdSis;
   const ciclo=parseInt(document.getElementById('inputCiclo').value)||1;
   const status=dif===0?'BATENDO':dif<0?'DEFICIT':'SUPERAVIT';
-  const res=await apiCall('saveContagem',{sku,armazem:arm,qtdFisica:qtd,usuario:STATE.currentUser.name});
-  const nova={id:res.id||genId('ROT'),dataHora:new Date().toLocaleString('pt-BR'),sku,descricao:res.descricao||info.descricao||'',armazem:arm,qtdFisica:qtd,qtdSistema:res.qtdSistema??qtdSis,difUnit:res.difUnit??dif,difFin:res.difFin??(dif*valUnit),valorUnit:res.valorUnit??valUnit,ciclo:res.ciclo??ciclo,usuario:STATE.currentUser.name,status:res.status||status,dataRelatorio:res.dataRelatorio||saldo.dataRelatorio};
+  const res=await apiCall('saveContagem',{
+    sku,
+    armazem:arm,
+    qtdFisica:qtd,
+    usuario:STATE.currentUser.name,
+    dataRelatorio:saldo?.dataRelatorio || '',
+    qtdSistema:qtdSis,
+    valorUnitario:valUnit
+  });
+  const nova={id:res.id||genId('ROT'),dataHora:new Date().toLocaleString('pt-BR'),sku,descricao:res.descricao||info.descricao||'',armazem:arm,qtdFisica:qtd,qtdSistema:res.qtdSistema??qtdSis,difUnit:res.difUnit??dif,difFin:res.difFin??(dif*valUnit),valorUnit:res.valorUnit??valUnit,ciclo:res.ciclo??ciclo,usuario:STATE.currentUser.name,status:res.status||status,dataRelatorio:res.dataRelatorio||saldo?.dataRelatorio||''};
   STATE.contagens.unshift(nova);
   renderContagensHoje();
   renderUltimoCiclo(); renderTabelaGeral();
@@ -1773,7 +1804,7 @@ function openSKUModal(editSku=null){
       <div class="form-group"><label>SKU *</label><input class="form-input" id="mSKU" value="${existing?.sku||''}" ${editSku?'readonly':''}></div>
       <div class="form-group"><label>Unidade *</label><input class="form-input" id="mUnidade" value="${existing?.unidade||'UN'}" placeholder="UN, KG, RL..."></div>
       <div class="form-group span-2"><label>Descrição *</label><input class="form-input" id="mDesc" value="${existing?.descricao||''}" placeholder="Descrição do produto"></div>
-      <div class="form-group"><label>Armazém Padrão</label><select class="form-input" id="mArmazem"><option value="1" ${normArm(existing?.armazem)==='1'?'selected':''}>1</option><option value="2" ${normArm(existing?.armazem)==='2'||!existing?'selected':''}>2</option><option value="3" ${normArm(existing?.armazem)==='3'?'selected':''}>3</option><option value="10" ${existing?.armazem==='10'?'selected':''}>10</option><option value="98" ${existing?.armazem==='98'?'selected':''}>98</option></select></div>
+      <div class="form-group"><label>Armazém Padrão</label><select class="form-input" id="mArmazem"><option value="01" ${existing?.armazem==='01'?'selected':''}>01</option><option value="02" ${existing?.armazem==='02'||!existing?'selected':''}>02</option><option value="03" ${existing?.armazem==='03'?'selected':''}>03</option><option value="10" ${existing?.armazem==='10'?'selected':''}>10</option><option value="98" ${existing?.armazem==='98'?'selected':''}>98</option></select></div>
     </div>
     <div class="form-actions"><button class="btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn-primary" onclick="saveSKU('${editSku||''}')">💾 Salvar</button></div>`;
   document.getElementById('modalOverlay').classList.add('show');
@@ -1936,7 +1967,7 @@ function openEndModal(codigo=null){
     <div class="modal-header"><h3>${codigo?'Editar':'Novo'} Endereço</h3><button class="modal-close" onclick="closeModal()">×</button></div>
     <div class="form-grid-2">
       <div class="form-group"><label>Código *</label><input class="form-input" id="eCodigo" value="${existing?.codigo||''}" ${codigo?'readonly':''}></div>
-      <div class="form-group"><label>Armazém</label><select class="form-input" id="eArmazem"><option value="1" ${normArm(existing?.armazem)==='1'?'selected':''}>1</option><option value="2" ${normArm(existing?.armazem)==='2'||!existing?'selected':''}>2</option><option value="3" ${normArm(existing?.armazem)==='3'?'selected':''}>3</option><option value="10">10</option><option value="98">98</option></select></div>
+      <div class="form-group"><label>Armazém</label><select class="form-input" id="eArmazem"><option value="1">1</option><option value="02" ${existing?.armazem==='02'||!existing?'selected':''}>02</option><option value="3">3</option><option value="10">10</option><option value="98">98</option></select></div>
       <div class="form-group"><label>Endereço <span style="color:var(--gray-400);font-weight:500">(opcional)</span></label><input class="form-input" id="eEnd" value="${existing?.endereco||''}" placeholder="Ex: A-01-01"></div>
       <div class="form-group"><label>Data</label><input type="date" class="form-input" id="eData" value="${new Date().toISOString().slice(0,10)}"></div>
     </div>
@@ -2095,7 +2126,7 @@ document.addEventListener('change',e=>{
 
 // ===== INVENTÁRIO GERAL =====
 const INV_STATE={saldo:[],contagens:[]};
-function normArm(v){const t=String(v??'').trim().replace(/^'/,'');return /^\d+$/.test(t)?String(parseInt(t,10)):t}
+function normArm(v){const s=String(v??'').trim().replace(/^'/,'');return /^\d+$/.test(s)?String(parseInt(s,10)):s}
 function normSku(v){return String(v??'').trim()}
 function invKey(sku, armazem){return `${normSku(sku)}_${normArm(armazem)}`}
 function getSaldoInv(sku, armazem){return INV_STATE.saldo.find(s=>normSku(s.codigo)===normSku(sku)&&normArm(s.armazem)===normArm(armazem));}
