@@ -603,8 +603,8 @@ body{font-family:var(--font);background:var(--off-white);color:var(--navy);min-h
             <input type="text" id="inputCiclo" placeholder="—" class="form-input" readonly>
           </div>
           <div class="form-group">
-            <label>Data / Hora</label>
-            <input type="text" id="inputDataHora" class="form-input" readonly>
+            <label>Data da Contagem</label>
+            <input type="date" id="inputDataHora" class="form-input">
           </div>
         </div>
 
@@ -628,7 +628,7 @@ body{font-family:var(--font);background:var(--off-white);color:var(--navy);min-h
         <div style="padding:14px 16px;font-family:var(--font-cond);font-size:13px;font-weight:700;color:var(--navy);border-bottom:1px solid var(--gray-100)">CONTAGENS RECENTES — HOJE</div>
         <div class="table-wrapper">
           <table class="data-table">
-            <thead><tr><th>Hora</th><th>SKU</th><th>Descrição</th><th>Armazém</th><th>Qtd. Física</th><th>Qtd. Sistema</th><th>Diferença</th><th>Ciclo</th><th>Status</th></tr></thead>
+            <thead><tr><th>Data</th><th>SKU</th><th>Descrição</th><th>Armazém</th><th>Qtd. Física</th><th>Qtd. Sistema</th><th>Diferença</th><th>Ciclo</th><th>Status</th></tr></thead>
             <tbody id="tbodyContagensHoje"><tr><td colspan="9" class="empty-row">Nenhuma contagem hoje ainda</td></tr></tbody>
           </table>
         </div>
@@ -1195,7 +1195,7 @@ window.addEventListener('load', () => {
   document.getElementById('currentDate').textContent = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'});
   document.getElementById('dateTo').value = new Date().toISOString().slice(0,10);
   initDateGuards();
-  setInterval(updateClock, 1000); updateClock();
+  updateClock();
   initNav();
   loadDashboard();
   renderImportHistory();
@@ -1234,9 +1234,17 @@ async function loadInitialData(){
   renderTabelaGeral();
 }
 
+function todayInputLocal(){
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function getDataContagemISO(){
+  const dh = document.getElementById('inputDataHora');
+  return dh && dh.value ? dh.value : todayInputLocal();
+}
 function updateClock(){
   const dh = document.getElementById('inputDataHora');
-  if(dh) dh.value = new Date().toLocaleString('pt-BR');
+  if(dh && !dh.value) dh.value = todayInputLocal();
 }
 
 // ===== NAV =====
@@ -1527,14 +1535,13 @@ function dateTimeLocalMs(v){
   return isNaN(d.getTime())?0:d.getTime();
 }
 function getSaldoSistemaLocal(sku, armazem){
-  const hoje=normDateLocal(new Date());
+  const dataSelecionada = getDataContagemISO();
   let rows=(STATE.saldoSistema||[]).filter(x=>
     String(x.codigo)===String(sku) &&
     normArm(x.armazem)===normArm(armazem) &&
-    normDateLocal(x.dataRelatorio)===hoje
+    normDateLocal(x.dataRelatorio)===dataSelecionada
   );
-  // Regra final: só considera saldo com DATA_RELATORIO igual à data de hoje.
-  // Se não houver saldo nessa data, não deve comparar usando relatório antigo.
+  // Regra final: só considera saldo com DATA_RELATORIO igual à data selecionada na contagem.
   rows.sort((a,b)=>dateTimeLocalMs(b.dataImportacao)-dateTimeLocalMs(a.dataImportacao));
   return rows[0]||null;
 }
@@ -1551,7 +1558,8 @@ function searchSKU(){
     document.getElementById('inputDescricao').value=info.descricao || 'SKU localizado na base';
     if(info.armazem) document.getElementById('inputArmazem').value=normArm(info.armazem);
     const arm=document.getElementById('inputArmazem').value;
-    const ciclos = STATE.contagens.filter(c=>String(c.sku)===String(v)&&normArm(c.armazem)===normArm(arm));
+    const dataSel = getDataContagemISO();
+    const ciclos = STATE.contagens.filter(c=>String(c.sku)===String(v)&&normArm(c.armazem)===normArm(arm)&&normDateLocal(c.dataRelatorio)===dataSel);
     const maxCiclo = ciclos.length?Math.max(...ciclos.map(c=>Number(c.ciclo)||0))+1:1;
     document.getElementById('inputCiclo').value=maxCiclo;
     document.getElementById('inputQtd').focus();
@@ -1562,13 +1570,17 @@ function searchSKU(){
 document.getElementById('inputSKU').addEventListener('keydown',e=>{if(e.key==='Enter')searchSKU();});
 document.getElementById('inputQtd').addEventListener('input',updateComparison);
 document.getElementById('inputArmazem').addEventListener('change',updateComparison);
+document.getElementById('inputDataHora').addEventListener('change',()=>{ searchSKU(); updateComparison(); });
 function updateComparison(){
   const sku=document.getElementById('inputSKU').value;
   const qtdF=parseFloat(document.getElementById('inputQtd').value)||0;
   if(!sku||!qtdF) return;
   const arm=document.getElementById('inputArmazem').value;
-  const saldo=getSaldoSistemaLocal(sku,arm) || STATE.contagens.find(c=>String(c.sku)===String(sku)&&normArm(c.armazem)===normArm(arm));
-  if(!saldo) return;
+  const saldo=getSaldoSistemaLocal(sku,arm);
+  if(!saldo){
+    document.getElementById('comparisonBox').style.display='none';
+    return;
+  }
   const qtdSistema=Number(saldo.saldo ?? saldo.qtdSistema ?? 0);
   const box=document.getElementById('comparisonBox');
   box.style.display='grid';
@@ -1589,7 +1601,11 @@ async function saveContagem(){
   const arm=document.getElementById('inputArmazem').value;
   if(!sku||isNaN(qtd)||!arm){showToast('Preencha SKU, Armazém e Quantidade','error');return;}
   const info=getSkuInfoLocal(sku,arm);
-  const saldo=getSaldoSistemaLocal(sku,arm) || STATE.contagens.find(c=>String(c.sku)===String(sku)&&normArm(c.armazem)===normArm(arm));
+  const saldo=getSaldoSistemaLocal(sku,arm);
+  if(!saldo){
+    showToast('Não tem saldo para esta data. Verifique a Data da Contagem e a DATA_RELATORIO importada.','error');
+    return;
+  }
   const qtdSis=Number(saldo?.saldo ?? saldo?.qtdSistema ?? 0);
   const valUnit=Number(saldo?.valorUnitario ?? saldo?.valorUnit ?? 0);
   const dif=qtd-qtdSis;
@@ -1600,11 +1616,12 @@ async function saveContagem(){
     armazem:arm,
     qtdFisica:qtd,
     usuario:STATE.currentUser.name,
-    dataRelatorio:saldo?.dataRelatorio || '',
+    dataContagem:getDataContagemISO(),
+    dataRelatorio:saldo?.dataRelatorio || getDataContagemISO(),
     qtdSistema:qtdSis,
     valorUnitario:valUnit
   });
-  const nova={id:res.id||genId('ROT'),dataHora:new Date().toLocaleString('pt-BR'),sku,descricao:res.descricao||info.descricao||'',armazem:arm,qtdFisica:qtd,qtdSistema:res.qtdSistema??qtdSis,difUnit:res.difUnit??dif,difFin:res.difFin??(dif*valUnit),valorUnit:res.valorUnit??valUnit,ciclo:res.ciclo??ciclo,usuario:STATE.currentUser.name,status:res.status||status,dataRelatorio:res.dataRelatorio||saldo?.dataRelatorio||''};
+  const nova={id:res.id||genId('ROT'),dataHora:res.dataHora||displayDateLocal(getDataContagemISO()),sku,descricao:res.descricao||info.descricao||'',armazem:arm,qtdFisica:qtd,qtdSistema:res.qtdSistema??qtdSis,difUnit:res.difUnit??dif,difFin:res.difFin??(dif*valUnit),valorUnit:res.valorUnit??valUnit,ciclo:res.ciclo??ciclo,usuario:STATE.currentUser.name,status:res.status||status,dataRelatorio:res.dataRelatorio||saldo?.dataRelatorio||''};
   STATE.contagens.unshift(nova);
   renderContagensHoje();
   renderUltimoCiclo(); renderTabelaGeral();
@@ -1614,6 +1631,7 @@ async function saveContagem(){
 function clearContagemForm(){
   ['inputSKU','inputDescricao','inputQtd','inputCiclo'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('inputArmazem').value='';
+  updateClock();
   document.getElementById('comparisonBox').style.display='none';
 }
 function renderContagensHoje(){
@@ -1622,7 +1640,7 @@ function renderContagensHoje(){
   const tbody=document.getElementById('tbodyContagensHoje');
   tbody.innerHTML=data.length?data.slice(0,20).map(r=>`
     <tr>
-      <td>${r.dataHora.split(' ')[1]||'—'}</td>
+      <td>${displayDateLocal(r.dataHora)||r.dataHora||'—'}</td>
       <td><strong>${r.sku}</strong></td>
       <td>${r.descricao}</td>
       <td>${r.armazem}</td>
