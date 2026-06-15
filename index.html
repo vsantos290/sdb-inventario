@@ -1473,8 +1473,10 @@ async function loadDashboard(){
     }
   }
 
-  console.log('Dashboard response:', payload);
-
+console.log(
+  'Dashboard response:',
+  JSON.stringify(payload, null, 2)
+);
   const cobertura = Number(k.pctContada || 0);
   const acuUnit = Number(k.acuraciaUnidade || 0);
   const acuFin = Number(k.acuraciaFinanceira || 0);
