@@ -1434,14 +1434,46 @@ Chart.defaults.color='rgba(255,255,255,.6)';
 
 async function loadDashboard(){
   validateDatePair('dateFrom','dateTo');
-  const res = await apiCall('getDashboard', {
+
+  const filtros = {
     dateFrom: document.getElementById('dateFrom')?.value || '',
     dateTo: document.getElementById('dateTo')?.value || '',
     armazem: document.getElementById('fArmazem')?.value || '',
     ciclo: document.getElementById('fCiclo')?.value || 'ultimo'
-  });
-  if(!res.success) return;
-  const k = res.kpis || {}, g = res.graficos || {};
+  };
+
+  let res;
+  try {
+    res = await apiCall('getDashboard', filtros);
+  } catch (e) {
+    console.error('Erro ao carregar dashboard:', e);
+    showToast('Erro ao carregar dashboard: ' + (e.message || e), 'error');
+    return;
+  }
+
+  // Compatibilidade: aceita retorno direto {kpis, graficos} ou retorno encapsulado {data:{kpis, graficos}}
+  let payload = res?.data && (res.data.kpis || res.data.graficos) ? res.data : res;
+
+  // Fallback: se vier zerado por filtro de tela, tenta carregar sem filtro.
+  let k = payload?.kpis || {};
+  let g = payload?.graficos || {};
+  const totalInicial = Number(k.total || 0);
+  const contadoInicial = Number(k.contado || 0);
+
+  if ((totalInicial === 0 && contadoInicial === 0) && (filtros.dateFrom || filtros.dateTo || filtros.armazem)) {
+    try {
+      const fallback = await apiCall('getDashboard', { dateFrom:'', dateTo:'', armazem:'', ciclo:'ultimo' });
+      payload = fallback?.data && (fallback.data.kpis || fallback.data.graficos) ? fallback.data : fallback;
+      k = payload?.kpis || {};
+      g = payload?.graficos || {};
+      console.warn('Dashboard carregado via fallback sem filtros:', payload?.debug || payload);
+    } catch (e) {
+      console.warn('Fallback do dashboard falhou:', e);
+    }
+  }
+
+  console.log('Dashboard response:', payload);
+
   const cobertura = Number(k.pctContada || 0);
   const acuUnit = Number(k.acuraciaUnidade || 0);
   const acuFin = Number(k.acuraciaFinanceira || 0);
@@ -1449,32 +1481,61 @@ async function loadDashboard(){
   const total = Number(k.total || 0);
   const contado = Number(k.contado || 0);
 
-  document.getElementById('kpiContada').textContent = fmtPct(cobertura);
-  document.getElementById('barContada').style.width = Math.min(100,cobertura)+'%';
-  document.getElementById('kpiAcuUnit').textContent = fmtPct(acuUnit);
-  document.getElementById('barAcuUnit').style.width = Math.min(100,acuUnit)+'%';
-  document.getElementById('kpiAcuFin').textContent = fmtPct(acuFin);
-  document.getElementById('barAcuFin').style.width = Math.min(100,acuFin)+'%';
-  document.getElementById('kpiDifFin').textContent = fmtR(difFin);
-  document.getElementById('kpiContTotal').textContent = contado+' / '+total+' itens';
-  if(document.getElementById('kpiFinal1')) document.getElementById('kpiFinal1').textContent = k.final1 ?? 0;
-  if(document.getElementById('kpiFinal2')) document.getElementById('kpiFinal2').textContent = k.final2 ?? 0;
-  if(document.getElementById('kpiFinal3')) document.getElementById('kpiFinal3').textContent = k.final3 ?? 0;
-  const barTotal = document.getElementById('barContTotal');
-  if(barTotal) barTotal.style.width = total ? Math.min(100,(contado/total*100))+'%' : '0%';
+  const setText = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  };
+  const setWidth = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.style.width = Math.max(0, Math.min(100, Number(value || 0))) + '%';
+  };
+
+  setText('kpiContada', fmtPct(cobertura));
+  setWidth('barContada', cobertura);
+
+  setText('kpiAcuUnit', fmtPct(acuUnit));
+  setWidth('barAcuUnit', acuUnit);
+
+  setText('kpiAcuFin', fmtPct(acuFin));
+  setWidth('barAcuFin', acuFin);
+
+  setText('kpiDifFin', fmtR(difFin));
+  setText('kpiContTotal', contado + ' / ' + total + ' itens');
+
+  setText('kpiFinal1', k.final1 ?? 0);
+  setText('kpiFinal2', k.final2 ?? 0);
+  setText('kpiFinal3', k.final3 ?? 0);
+
+  setWidth('barContTotal', total ? (contado / total * 100) : 0);
 
   const sinal = difFin > 0 ? 'superávit' : difFin < 0 ? 'déficit' : 'sem divergência financeira';
-  document.getElementById('insightMain').textContent = `Inventário com ${fmtPct(cobertura)} de cobertura e ${fmtR(difFin)} de ${sinal}.`;
-  document.getElementById('insightPriority').textContent = acuFin < 99.85 ? 'Priorize os itens com maior divergência financeira antes de fechar o ciclo.' : 'Acurácia financeira dentro ou próxima da meta.';
-  document.getElementById('insightRisk').textContent = cobertura < 80 ? 'Cobertura ainda baixa: resultado parcial pode distorcer a análise.' : 'Cobertura suficiente para análise operacional.';
+  setText('insightMain', total
+    ? `Inventário com ${fmtPct(cobertura)} de cobertura e ${fmtR(difFin)} de ${sinal}.`
+    : 'Nenhuma base de saldo foi localizada para o dashboard.'
+  );
+  setText('insightPriority', acuFin < 99.85
+    ? 'Priorize os itens com maior divergência financeira antes de fechar o ciclo.'
+    : 'Acurácia financeira dentro ou próxima da meta.'
+  );
+  setText('insightRisk', cobertura < 80
+    ? 'Cobertura ainda baixa: resultado parcial pode distorcer a análise.'
+    : 'Cobertura suficiente para análise operacional.'
+  );
 
   const badge = document.getElementById('notifBadge');
-  if(badge) badge.textContent = (STATE.ajustes||[]).length;
+  if (badge) badge.textContent = (STATE.ajustes || []).length;
 
-  buildChartDifUnit(g.difUnitPorMes || {labels:[],data:[]});
-  buildGauge('chartGaugeFinanceiro','gaugeFinVal',acuFin);
-  buildGauge('chartGaugeUnidade','gaugeUnitVal',acuUnit);
-  buildChartSKU(g.skuPorMes || {labels:[],data:[]});
+  const difUnitPorMes = g.difUnitPorMes || { labels: [], data: [] };
+  const skuPorMes = g.skuPorMes || { labels: [], data: [] };
+
+  if (typeof Chart !== 'undefined') {
+    buildChartDifUnit(difUnitPorMes);
+    buildGauge('chartGaugeFinanceiro', 'gaugeFinVal', acuFin);
+    buildGauge('chartGaugeUnidade', 'gaugeUnitVal', acuUnit);
+    buildChartSKU(skuPorMes);
+  } else {
+    console.warn('Chart.js não carregou. KPIs exibidos sem gráficos.');
+  }
 }
 
 function buildChartDifUnit(data){
