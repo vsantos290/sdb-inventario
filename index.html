@@ -1211,7 +1211,7 @@ async function loadInitialData(){
         apiCall('getSKUs'),
         apiCall('getAjustes'),
         apiCall('getEnderecamento'),
-        apiCall('getContagens'),
+        apiCall('getContagens', { pageSize: 50000 }),
         apiCall('getImportHistory'),
         apiCall('getInvGeralSaldo'),
         apiCall('getInvContagens'),
@@ -1433,7 +1433,6 @@ Chart.defaults.font.family="'Barlow',sans-serif";
 Chart.defaults.color='rgba(255,255,255,.6)';
 
 async function loadDashboard(){
-   alert('Dashboard carregando');
   validateDatePair('dateFrom','dateTo');
 
   const filtros = {
@@ -1473,11 +1472,8 @@ async function loadDashboard(){
     }
   }
 
-console.log(
-  'Dashboard response:',
-  JSON.stringify(payload, null, 2)
-);
-  const cobertura = Number(k.pctContada || 0);
+console.log('Dashboard response:', payload);
+const cobertura = Number(k.pctContada || 0);
   const acuUnit = Number(k.acuraciaUnidade || 0);
   const acuFin = Number(k.acuraciaFinanceira || 0);
   const difFin = Number(k.difFinanceira || 0);
@@ -1723,19 +1719,36 @@ function renderUltimoCiclo(){
   const sit=(document.getElementById('filterUCSit')||{}).value||'';
   const arm=(document.getElementById('filterUCArm')||{}).value||'';
 
-  // Último ciclo por SKU+Armazem
+  // Último ciclo por SKU + Armazém.
+  // Mostra o último registro de cada item em cada armazém, independentemente da DATA_RELATORIO.
   const map={};
-  STATE.contagens.forEach(r=>{const k=`${r.sku}_${r.armazem}`;if(!map[k]||Number(r.ciclo)>Number(map[k].ciclo))map[k]=r;});
+  STATE.contagens.forEach(r=>{
+    const k=`${normSku(r.sku)}_${normArm(r.armazem)}`;
+    const atual=map[k];
+    const cicloNovo=Number(r.ciclo)||0;
+    const cicloAtual=atual?Number(atual.ciclo)||0:-1;
+    const dataNova=parseDateBR(r.dataHora);
+    const dataAtual=atual?parseDateBR(atual.dataHora):null;
+    if(!atual || cicloNovo>cicloAtual || (cicloNovo===cicloAtual && dataNova && (!dataAtual || dataNova>dataAtual))){
+      map[k]=r;
+    }
+  });
+
   let data=Object.values(map);
   if(sit) data=data.filter(r=>r.status===sit);
-  if(arm) data=data.filter(r=>String(r.armazem)===String(arm));
-  if(search){const s=search.toLowerCase();data=data.filter(r=>[r.dataHora,r.sku,r.armazem,r.descricao,r.qtdSistema,r.qtdFisica,r.difUnit,r.difFin,r.ciclo,r.usuario,r.status].join(' ').toLowerCase().includes(s));}
+  if(arm) data=data.filter(r=>normArm(r.armazem)===normArm(arm));
+  if(search){
+    const s=search.toLowerCase();
+    data=data.filter(r=>[r.dataHora,r.sku,r.armazem,r.descricao,r.qtdSistema,r.qtdFisica,r.difUnit,r.difFin,r.ciclo,r.usuario,r.status,r.dataRelatorio].join(' ').toLowerCase().includes(s));
+  }
+
+  data.sort((a,b)=>(parseDateBR(b.dataHora)||0)-(parseDateBR(a.dataHora)||0));
 
   const total=data.length;
   const paged=data.slice((ucPage-1)*UC_PAGE_SIZE,ucPage*UC_PAGE_SIZE);
 
   const tbody=document.getElementById('tbodyUC');
-  tbody.innerHTML=paged.map(r=>`
+  tbody.innerHTML=paged.length?paged.map(r=>`
     <tr>
       <td>${r.dataHora}</td>
       <td><strong>${r.sku}</strong></td>
@@ -1749,10 +1762,16 @@ function renderUltimoCiclo(){
       <td>${fmt(r.valorUnit)}</td>
       <td class="${r.difFin>0?'positive':r.difFin<0?'negative':''}">${fmtR(r.difFin)}</td>
       <td><span class="status-badge ${(r.status||'').toLowerCase()}">${r.status}</span></td>
-    </tr>`).join('');
+    </tr>`).join(''):'<tr><td colspan="12" class="empty-row">Nenhum registro encontrado</td></tr>';
 
-  // Totais
-  const tots=data.reduce((a,r)=>({s:a.s+Number(r.qtdSistema),f:a.f+Number(r.qtdFisica),d:a.d+Number(r.difUnit),u:a.u+Number(r.valorUnit),ff:a.ff+Number(r.difFin)}),{s:0,f:0,d:0,u:0,ff:0});
+  const tots=data.reduce((a,r)=>({
+    s:a.s+Number(r.qtdSistema||0),
+    f:a.f+Number(r.qtdFisica||0),
+    d:a.d+Number(r.difUnit||0),
+    u:a.u+Number(r.valorUnit||0),
+    ff:a.ff+Number(r.difFin||0)
+  }),{s:0,f:0,d:0,u:0,ff:0});
+
   document.getElementById('totSis').textContent=fmt(tots.s);
   document.getElementById('totFis').textContent=fmt(tots.f);
   const totDifEl=document.getElementById('totDif');totDifEl.textContent=fmt(tots.d);totDifEl.className=tots.d<0?'negative':tots.d>0?'positive':'';
@@ -1775,31 +1794,54 @@ function renderTabelaGeral(){
   const periodo=(document.getElementById('filterGeralData')||{}).value||'';
   const dtIni=(document.getElementById('filterGeralDataIni')||{}).value||'';
   const dtFim=(document.getElementById('filterGeralDataFim')||{}).value||'';
+
+  // Sem filtros, a tabela geral mostra TODAS as contagens de TODOS os armazéns.
   let data=[...STATE.contagens];
+
   if(sit)data=data.filter(r=>r.status===sit);
-  if(arm)data=data.filter(r=>String(r.armazem)===String(arm));
+  if(arm)data=data.filter(r=>normArm(r.armazem)===normArm(arm));
+
   if(ciclo==='ultimo'){
     const map={};
-    data.forEach(r=>{const k=`${r.sku}_${r.armazem}`; if(!map[k]||Number(r.ciclo)>Number(map[k].ciclo)) map[k]=r;});
+    data.forEach(r=>{
+      const k=`${normSku(r.sku)}_${normArm(r.armazem)}`;
+      const atual=map[k];
+      if(!atual || Number(r.ciclo)>Number(atual.ciclo) ||
+        (Number(r.ciclo)===Number(atual.ciclo) && (parseDateBR(r.dataHora)||0)>(parseDateBR(atual.dataHora)||0))){
+        map[k]=r;
+      }
+    });
     data=Object.values(map);
   } else if(ciclo==='anteriores'){
     const max={};
-    data.forEach(r=>{const k=`${r.sku}_${r.armazem}`; max[k]=Math.max(max[k]||0,Number(r.ciclo)||0);});
-    data=data.filter(r=>Number(r.ciclo)<max[`${r.sku}_${r.armazem}`]);
+    data.forEach(r=>{
+      const k=`${normSku(r.sku)}_${normArm(r.armazem)}`;
+      max[k]=Math.max(max[k]||0,Number(r.ciclo)||0);
+    });
+    data=data.filter(r=>Number(r.ciclo)<max[`${normSku(r.sku)}_${normArm(r.armazem)}`]);
   }
-  if(search){const s=search.toLowerCase();data=data.filter(r=>[r.dataHora,r.sku,r.armazem,r.descricao,r.qtdSistema,r.qtdFisica,r.difUnit,r.difFin,r.ciclo,r.usuario,r.status].join(' ').toLowerCase().includes(s));}
-  if(dtIni||dtFim){data=data.filter(r=>inDateRangeBR(r.dataHora,dtIni,dtFim));}
-  else if(periodo){
+
+  if(search){
+    const s=search.toLowerCase();
+    data=data.filter(r=>[r.dataHora,r.sku,r.armazem,r.descricao,r.qtdSistema,r.qtdFisica,r.difUnit,r.difFin,r.ciclo,r.usuario,r.status,r.dataRelatorio].join(' ').toLowerCase().includes(s));
+  }
+
+  if(dtIni||dtFim){
+    data=data.filter(r=>inDateRangeBR(r.dataHora,dtIni,dtFim));
+  } else if(periodo){
     const now=new Date();
     let a=new Date(now.getFullYear(),now.getMonth(),now.getDate()), b=new Date(now.getFullYear(),now.getMonth(),now.getDate(),23,59,59);
     if(periodo==='semana'){const day=(now.getDay()+6)%7; a=new Date(now.getFullYear(),now.getMonth(),now.getDate()-day); b=new Date(a); b.setDate(a.getDate()+6); b.setHours(23,59,59,999);}
     if(periodo==='mes'){a=new Date(now.getFullYear(),now.getMonth(),1); b=new Date(now.getFullYear(),now.getMonth()+1,0,23,59,59,999);}
     data=data.filter(r=>{const d=parseDateBR(r.dataHora); return !!d && d>=a&&d<=b;});
   }
+
   data.sort((a,b)=>(parseDateBR(b.dataHora)||0)-(parseDateBR(a.dataHora)||0));
+
   const total=data.length;
   const paged=data.slice((geralPage-1)*GERAL_PAGE_SIZE,geralPage*GERAL_PAGE_SIZE);
   const tbody=document.getElementById('tbodyGeral');
+
   tbody.innerHTML=paged.length?paged.map(r=>`
     <tr>
       <td>${r.dataHora}</td><td><strong>${r.sku}</strong></td><td>${r.armazem}</td><td>${r.descricao}</td>
@@ -1809,6 +1851,7 @@ function renderTabelaGeral(){
       <td>${r.ciclo}</td><td>${r.usuario}</td>
       <td><span class="status-badge ${(r.status||'').toLowerCase()}">${r.status}</span></td>
     </tr>`).join(''):'<tr><td colspan="11" class="empty-row">Nenhum registro encontrado</td></tr>';
+
   document.getElementById('infoGeral').textContent=total+' registros';
   buildPagination('paginGeral',total,GERAL_PAGE_SIZE,geralPage,p=>{geralPage=p;renderTabelaGeral();});
 }
