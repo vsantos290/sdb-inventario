@@ -437,10 +437,6 @@ body{font-family:var(--font);background:var(--off-white);color:var(--navy);min-h
   <nav class="sidebar-nav">
     <div class="nav-section">
       <span class="nav-label">PRINCIPAL</span>
-      <a href="#" class="nav-item active" data-page="dashboard">
-        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-        <span>Dashboard</span>
-      </a>
     </div>
     <div class="nav-section">
       <span class="nav-label">INVENTÁRIO ROTATIVO</span>
@@ -448,7 +444,7 @@ body{font-family:var(--font);background:var(--off-white);color:var(--navy);min-h
         <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/><path d="M9 12l2 2 4-4"/></svg>
         <span>Nova Contagem</span>
       </a>
-      <a href="#" class="nav-item" data-page="ultimociclo">
+      <a href="#" class="nav-item active" data-page="ultimociclo">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
         <span>Último Ciclo</span>
       </a>
@@ -475,7 +471,7 @@ body{font-family:var(--font);background:var(--off-white);color:var(--navy);min-h
         <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
         <span>Endereçamento</span>
       </a>
-      <a href="#" class="nav-item" data-page="usuarios">
+      <a href="#" class="nav-item admin-only" data-page="usuarios">
         <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
         <span>Usuários</span>
       </a>
@@ -523,7 +519,7 @@ body{font-family:var(--font);background:var(--off-white);color:var(--navy);min-h
   <div class="pages-container">
 
     <!-- ==================== DASHBOARD ==================== -->
-    <div class="page active" id="page-dashboard">
+    <div class="page" id="page-dashboard">
       <div class="dash-hero">
         <div>
           <div class="dash-eyebrow">Visão gerencial</div>
@@ -636,7 +632,7 @@ body{font-family:var(--font);background:var(--off-white);color:var(--navy);min-h
     </div>
 
     <!-- ==================== ÚLTIMO CICLO ==================== -->
-    <div class="page" id="page-ultimociclo">
+    <div class="page active" id="page-ultimociclo">
       <div class="page-header">
         <h1>ÚLTIMO CICLO CONTADO</h1>
         <div class="header-actions">
@@ -1197,7 +1193,7 @@ window.addEventListener('load', () => {
   initDateGuards();
   updateClock();
   initNav();
-  loadDashboard();
+  // Dashboard removido da navegação: tela inicial passa a ser Último Ciclo.
   renderImportHistory();
   renderUltimoCiclo();
   renderTabelaGeral();
@@ -1228,7 +1224,6 @@ async function loadInitialData(){
       renderSkuDatalist();
     }
   }catch(e){ console.warn(e); }
-  loadDashboard();
   renderImportHistory();
   renderUltimoCiclo();
   renderTabelaGeral();
@@ -1253,8 +1248,13 @@ function initNav(){
     item.addEventListener('click', e => { e.preventDefault(); navigateTo(item.dataset.page); });
   });
 }
-const PAGE_TITLES = {dashboard:'Dashboard',contagem:'Nova Contagem',ultimociclo:'Último Ciclo Contado',tabelageral:'Tabela Geral',importar:'Importar Saldo',sku:'Cadastro de SKU',ajustes:'Histórico de Ajustes',enderecamento:'Endereçamento',usuarios:'Cadastro de Usuários',invgeral:'Inventário Geral'};
+const PAGE_TITLES = {contagem:'Nova Contagem',ultimociclo:'Último Ciclo Contado',tabelageral:'Tabela Geral',importar:'Importar Saldo',sku:'Cadastro de SKU',ajustes:'Histórico de Ajustes',enderecamento:'Endereçamento',usuarios:'Cadastro de Usuários',invgeral:'Inventário Geral'};
 function navigateTo(id){
+  if(id==='dashboard') id='ultimociclo';
+  if(id==='usuarios' && !isAdmin()){
+    showToast('Acesso permitido apenas para administradores.','warning');
+    id='ultimociclo';
+  }
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const pg = document.getElementById('page-'+id);
@@ -1314,7 +1314,7 @@ async function apiCall(action, data = {}) {
       headers: {
         'Content-Type': 'text/plain;charset=utf-8'
       },
-      body: JSON.stringify({ action, data })
+      body: JSON.stringify({ action, data: { ...data, _user: APP.user } })
     });
 
     const json = await resp.json();
@@ -1424,8 +1424,11 @@ function initDateGuards(){
   });
 }
 function genId(p='ID'){return p+'-'+Date.now()+'-'+Math.floor(Math.random()*9999)}
-function isAdmin(){return String(APP.user?.perfil || STATE.currentUser?.role || '').toUpperCase()==='ADMINISTRADOR'}
-function applyAdminVisibility(){document.querySelectorAll('.admin-only').forEach(el=>el.style.display=isAdmin()?'':'none')}
+function isAdmin(){return String(APP.user?.perfil || STATE.currentUser?.role || '').trim().toUpperCase()==='ADMINISTRADOR'}
+function applyAdminVisibility(){
+  document.querySelectorAll('.admin-only').forEach(el=>el.style.display=isAdmin()?'':'none');
+  if(!isAdmin() && document.getElementById('page-usuarios')?.classList.contains('active')) navigateTo('ultimociclo');
+}
 
 // ===== DASHBOARD =====
 let chartDifUnit=null,chartGaugeFin=null,chartGaugeUnit=null,chartSKU=null;
@@ -1750,7 +1753,7 @@ function renderUltimoCiclo(){
   const tbody=document.getElementById('tbodyUC');
   tbody.innerHTML=paged.length?paged.map(r=>`
     <tr>
-      <td>${r.dataHora}</td>
+      <td>${displayDateLocal(r.dataHora)||"—"}</td>
       <td><strong>${r.sku}</strong></td>
       <td>${r.armazem}</td>
       <td>${r.descricao}</td>
@@ -1844,7 +1847,7 @@ function renderTabelaGeral(){
 
   tbody.innerHTML=paged.length?paged.map(r=>`
     <tr>
-      <td>${r.dataHora}</td><td><strong>${r.sku}</strong></td><td>${r.armazem}</td><td>${r.descricao}</td>
+      <td>${displayDateLocal(r.dataHora)||"—"}</td><td><strong>${r.sku}</strong></td><td>${r.armazem}</td><td>${r.descricao}</td>
       <td>${fmt(r.qtdSistema)}</td><td>${fmt(r.qtdFisica)}</td>
       <td class="${r.difUnit>0?'positive':r.difUnit<0?'negative':''}">${fmt(r.difUnit)}</td>
       <td class="${r.difFin>0?'positive':r.difFin<0?'negative':''}">${fmtR(r.difFin)}</td>
@@ -2476,7 +2479,7 @@ function switchInvTab(tabId,btn){
 // ===== EXPORT =====
 function exportData(type){
   const data=type==='ultimociclo'?[...STATE.contagens]:STATE.contagens;
-  const rows=data.map(r=>({'Data/Hora':r.dataHora,'SKU':r.sku,'Armazém':r.armazem,'Descrição':r.descricao,'Qtd Sistema':r.qtdSistema,'Qtd Físico':r.qtdFisica,'Dif Unitária':r.difUnit,'Dif Financeira':r.difFin,'Ciclo':r.ciclo,'Usuário':r.usuario,'Status':r.status}));
+  const rows=data.map(r=>({'Data':displayDateLocal(r.dataHora)||r.dataHora,'SKU':r.sku,'Armazém':r.armazem,'Descrição':r.descricao,'Qtd Sistema':r.qtdSistema,'Qtd Físico':r.qtdFisica,'Dif Unitária':r.difUnit,'Dif Financeira':r.difFin,'Ciclo':r.ciclo,'Usuário':r.usuario,'Status':r.status}));
   const ws=XLSX.utils.json_to_sheet(rows);
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'Dados');
@@ -2485,7 +2488,7 @@ function exportData(type){
 }
 function exportCSV(type){
   const data=STATE.contagens;
-  const rows=data.map(r=>({'Data/Hora':r.dataHora,'SKU':r.sku,'Armazém':r.armazem,'Descrição':r.descricao,'Qtd Sistema':r.qtdSistema,'Qtd Físico':r.qtdFisica,'Diferença':r.difUnit,'Dif Financeira':r.difFin,'Ciclo':r.ciclo,'Status':r.status}));
+  const rows=data.map(r=>({'Data':displayDateLocal(r.dataHora)||r.dataHora,'SKU':r.sku,'Armazém':r.armazem,'Descrição':r.descricao,'Qtd Sistema':r.qtdSistema,'Qtd Físico':r.qtdFisica,'Diferença':r.difUnit,'Dif Financeira':r.difFin,'Ciclo':r.ciclo,'Status':r.status}));
   const ws=XLSX.utils.json_to_sheet(rows);
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'CSV');
