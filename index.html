@@ -2166,18 +2166,54 @@ function cancelUpload(type){
   if(prev)prev.style.display='none';
   delete pendingImport[type];
 }
+function normHeaderImport_(h){
+  return String(h || '')
+    .trim()
+    .toUpperCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^A-Z0-9]/g,'');
+}
+function canonicalHeaderImport_(h){
+  const n = normHeaderImport_(h);
+  const map = {
+    CODIGO:'CODIGO', COD:'CODIGO', SKU:'CODIGO', ITEM:'CODIGO', PRODUTO:'CODIGO', CODPRODUTO:'CODIGO', CODIGOPRODUTO:'CODIGO',
+    SALDOATUAL:'SALDO_ATUAL', SALDO:'SALDO_ATUAL', QUANTIDADE:'SALDO_ATUAL', QTDE:'SALDO_ATUAL', QTD:'SALDO_ATUAL', QTDSISTEMA:'SALDO_ATUAL', QUANTIDADESISTEMA:'SALDO_ATUAL',
+    ARMAZEM:'ARMAZEM', ARM:'ARMAZEM', LOCAL:'ARMAZEM', DEPOSITO:'ARMAZEM', ALMOXARIFADO:'ARMAZEM',
+    VALORUNITARIO:'VALOR_UNITARIO', VALORUNIT:'VALOR_UNITARIO', VALUNIT:'VALOR_UNITARIO', CUSTOUNITARIO:'VALOR_UNITARIO', CUSTO:'VALOR_UNITARIO', VALOR:'VALOR_UNITARIO',
+    DATA:'DATA', DATAINVENTARIO:'DATA', DATARELATORIO:'DATA', DTINVENTARIO:'DATA', DTRELATORIO:'DATA',
+    DOC:'DOC', DOCUMENTO:'DOC', NUMDOC:'DOC', NUMERODOC:'DOC', NUMERODOCUMENTO:'DOC', NF:'DOC', NOTA:'DOC',
+    LOTE:'LOTE', LOT:'LOTE',
+    ENDERECO:'ENDERECO', LOCALIZACAO:'ENDERECO', POSICAO:'ENDERECO', RUA:'ENDERECO'
+  };
+  return map[n] || String(h || '').trim().toUpperCase();
+}
+function buildImportObjects_(data){
+  const rawHeaders = data[0].map(h=>String(h).trim());
+  const headers = rawHeaders.map(canonicalHeaderImport_);
+  const rows = data.slice(1)
+    .filter(r=>r.some(v=>v!==''&&v!==null&&v!==undefined))
+    .map((r,rowIndex)=>{
+      const obj={_rowNumber:rowIndex+2};
+      headers.forEach((h,i)=>{
+        if(!h)return;
+        if(obj[h]===undefined || obj[h]==='' || obj[h]===null) obj[h]=r[i];
+      });
+      return obj;
+    });
+  return {headers, rows};
+}
 async function confirmImport(type){
   const pending=pendingImport[type];
   if(!pending){showToast('Nenhum arquivo selecionado','warning');return;}
   const {file,data}=pending;
-  const headers=data[0].map(h=>String(h).trim().toUpperCase());
-  const rows=data.slice(1).filter(r=>r.some(v=>v!==''&&v!==null&&v!==undefined)).map(r=>{const obj={};headers.forEach((h,i)=>obj[h]=r[i]);return obj;});
+  const {headers, rows}=buildImportObjects_(data);
 
   const required = {
     saldo:['CODIGO','ARMAZEM','SALDO_ATUAL','VALOR_UNITARIO','DESCRICAO','UNIDADE','DATA_RELATORIO'],
     sku:['SKU','DESCRICAO','UNIDADE','ARMAZEM_PADRAO'],
     end:['CODIGO','ARMAZEM'],
-    invgeral:['CODIGO','SALDO_ATUAL','ARMAZEM','VALOR_UNITARIO','DATA']
+    invgeral:['CODIGO','SALDO_ATUAL','ARMAZEM','VALOR_UNITARIO','DATA','DOC']
   }[type] || [];
   const missing = required.filter(c=>!headers.includes(c));
   if(missing.length){showToast('Colunas ausentes: '+missing.join(', '),'error');return;}
@@ -2203,12 +2239,13 @@ async function confirmImport(type){
     STATE.enderecamento = end.data || STATE.enderecamento;
     renderEnderecamento();
   } else if(type==='invgeral'){
-    await apiCall('importInvGeralSaldo',rows);
-    INV_STATE.saldo = rows.map(r=>({codigo:r.CODIGO,saldo:Number(r.SALDO_ATUAL)||0,armazem:r.ARMAZEM,valorUnitario:Number(r.VALOR_UNITARIO)||0,data:r.DATA,doc:r.DOC,lote:r.LOTE,endereco:r.ENDERECO}));
+    const res = await apiCall('importInvGeralSaldo',{filename:file.name,rows,usuario:STATE.currentUser?.name || 'Admin'});
+    INV_STATE.saldo = res.data || rows.map(r=>({codigo:r.CODIGO,saldo:Number(r.SALDO_ATUAL)||0,armazem:r.ARMAZEM,valorUnitario:Number(r.VALOR_UNITARIO)||0,data:r.DATA,doc:r.DOC,lote:r.LOTE||'',endereco:r.ENDERECO||''}));
     renderInvGeral();
+    if(res.skipped){showToast(`Importação concluída: ${res.imported} importados e ${res.skipped} ignorados.`, 'warning');}
   }
   cancelUpload(type);
-  showToast(`✅ ${rows.length} registros importados com sucesso!`);
+  showToast(`✅ ${type==='invgeral' ? (rows.length+' linhas processadas') : (rows.length+' registros importados com sucesso!')}`);
   delete pendingImport[type];
 }
 function renderImportHistory(){
